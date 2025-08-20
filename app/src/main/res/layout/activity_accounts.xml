@@ -52,6 +52,8 @@
         android:layout_margin="16dp"
         android:src="@drawable/ic_add"
         app:tint="@android:color/white"
-        android:contentDescription="Добавить счет"/>
+        android:contentDescription="Добавить счет"
+        app:borderWidth="2dp"
+        app:borderColor="?attr/colorPrimary"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

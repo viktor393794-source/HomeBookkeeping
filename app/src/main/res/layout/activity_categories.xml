@@ -51,6 +51,8 @@
         android:layout_margin="16dp"
         android:src="@drawable/ic_add"
         app:tint="@android:color/white"
-        android:contentDescription="Добавить категорию"/>
+        android:contentDescription="Добавить категорию"
+        app:borderWidth="2dp"
+        app:borderColor="?attr/colorPrimary"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

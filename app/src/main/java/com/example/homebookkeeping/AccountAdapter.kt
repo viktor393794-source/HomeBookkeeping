@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import java.util.Locale
 
@@ -35,6 +36,15 @@ class AccountAdapter(private val accounts: List<Account>) :
 
         holder.nameTextView.text = account.name
         holder.balanceTextView.text = String.format(Locale.GERMANY, "%,.2f", account.balance)
+
+        // --- НОВАЯ ЛОГИКА: РАСКРАШИВАЕМ БАЛАНС ---
+        val balanceColor = if (account.balance < 0) {
+            ContextCompat.getColor(context, R.color.colorExpense) // Красный для отрицательного
+        } else {
+            ContextCompat.getColor(context, R.color.colorIncome)  // Зеленый для положительного
+        }
+        holder.balanceTextView.setTextColor(balanceColor)
+        // --- КОНЕЦ НОВОЙ ЛОГИКИ ---
 
         try {
             val background = holder.iconContainer.background as GradientDrawable

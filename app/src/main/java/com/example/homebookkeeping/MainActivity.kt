@@ -8,7 +8,6 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -46,8 +45,9 @@ class MainActivity : AppCompatActivity() {
     private val allCategories = mutableListOf<Category>()
     private val hierarchicalCategories = mutableListOf<Category>()
 
-    private lateinit var accountSpinnerAdapter: ArrayAdapter<String>
-    private lateinit var categorySpinnerAdapter: ArrayAdapter<String>
+    // --- ИЗМЕНЕНИЕ: Меняем тип адаптеров ---
+    private lateinit var accountSpinnerAdapter: AccountSpinnerAdapter
+    private lateinit var categorySpinnerAdapter: CategorySpinnerAdapter
 
     private var selectedDate: Calendar = Calendar.getInstance()
 
@@ -99,12 +99,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupSpinners() {
-        accountSpinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, mutableListOf("Загрузка..."))
-        accountSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        // --- ИЗМЕНЕНИЕ: Инициализируем новые адаптеры с пустыми списками ---
+        accountSpinnerAdapter = AccountSpinnerAdapter(this, accountsList)
         fromAccountSpinner.adapter = accountSpinnerAdapter
         toAccountSpinner.adapter = accountSpinnerAdapter
-        categorySpinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, mutableListOf("Загрузка..."))
-        categorySpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+        categorySpinnerAdapter = CategorySpinnerAdapter(this, hierarchicalCategories)
         categorySpinner.adapter = categorySpinnerAdapter
     }
 
@@ -172,12 +172,12 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Сначала создайте и выберите счет", Toast.LENGTH_SHORT).show()
             return
         }
-        val selectedAccount = accountsList[fromAccountSpinner.selectedItemPosition]
+        val selectedAccount = fromAccountSpinner.selectedItem as Account
         if (hierarchicalCategories.isEmpty() || categorySpinner.selectedItemPosition < 0) {
             Toast.makeText(this, "Сначала создайте и выберите категорию", Toast.LENGTH_SHORT).show()
             return
         }
-        val selectedCategory = hierarchicalCategories[categorySpinner.selectedItemPosition]
+        val selectedCategory = categorySpinner.selectedItem as Category
         val isLeafCategory = allCategories.none { it.parentId == selectedCategory.id }
         if (!isLeafCategory) {
             Toast.makeText(this, "Выберите подкатегорию. Нельзя присваивать операции родительским категориям.", Toast.LENGTH_LONG).show()
@@ -222,8 +222,8 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Счета должны быть разными", Toast.LENGTH_SHORT).show()
             return
         }
-        val fromAccount = accountsList[fromAccountSpinner.selectedItemPosition]
-        val toAccount = accountsList[toAccountSpinner.selectedItemPosition]
+        val fromAccount = fromAccountSpinner.selectedItem as Account
+        val toAccount = toAccountSpinner.selectedItem as Account
         if (fromAccount.balance < amount) {
             Toast.makeText(this, "Недостаточно средств на счете '${fromAccount.name}'", Toast.LENGTH_SHORT).show()
             return
@@ -295,13 +295,7 @@ class MainActivity : AppCompatActivity() {
             }
             totalBalanceTextView.setTextColor(balanceColor)
 
-            val accountNames = accountsList.map { it.name }
-            accountSpinnerAdapter.clear()
-            if (accountNames.isNotEmpty()) {
-                accountSpinnerAdapter.addAll(accountNames)
-            } else {
-                accountSpinnerAdapter.add("Создайте счет")
-            }
+            // --- ИЗМЕНЕНИЕ: Обновляем адаптер ---
             accountSpinnerAdapter.notifyDataSetChanged()
         }
     }
@@ -330,16 +324,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
         addChildren("", 0)
-        val displayNames = hierarchicalCategories.map {
-            val prefix = "— ".repeat(it.level)
-            "$prefix${it.name}"
-        }
-        categorySpinnerAdapter.clear()
-        if (displayNames.isNotEmpty()) {
-            categorySpinnerAdapter.addAll(displayNames)
-        } else {
-            categorySpinnerAdapter.add("Создайте категорию")
-        }
+
+        // --- ИЗМЕНЕНИЕ: Обновляем адаптер ---
         categorySpinnerAdapter.notifyDataSetChanged()
     }
 }

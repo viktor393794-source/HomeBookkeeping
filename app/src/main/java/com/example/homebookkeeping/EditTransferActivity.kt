@@ -29,7 +29,8 @@ class EditTransferActivity : AppCompatActivity() {
     private lateinit var dateButton: Button
 
     private val accountsList = mutableListOf<Account>()
-    private lateinit var accountSpinnerAdapter: ArrayAdapter<String>
+    // --- ИЗМЕНЕНИЕ: Меняем тип адаптера ---
+    private lateinit var accountSpinnerAdapter: AccountSpinnerAdapter
 
     private var selectedDate: Calendar = Calendar.getInstance()
 
@@ -44,6 +45,7 @@ class EditTransferActivity : AppCompatActivity() {
         }
 
         initializeUI()
+        setupSpinners() // --- ИЗМЕНЕНИЕ: Вызываем новый setupSpinners ---
         setupListeners()
         loadInitialData()
     }
@@ -54,12 +56,15 @@ class EditTransferActivity : AppCompatActivity() {
         fromAccountSpinner = findViewById(R.id.fromAccountSpinner)
         toAccountSpinner = findViewById(R.id.toAccountSpinner)
         dateButton = findViewById(R.id.dateButton)
+    }
 
-        accountSpinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, mutableListOf())
-        accountSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+    // --- ИЗМЕНЕНИЕ: Новый метод для инициализации адаптера ---
+    private fun setupSpinners() {
+        accountSpinnerAdapter = AccountSpinnerAdapter(this, accountsList)
         fromAccountSpinner.adapter = accountSpinnerAdapter
         toAccountSpinner.adapter = accountSpinnerAdapter
     }
+
 
     private fun setupListeners() {
         findViewById<Button>(R.id.saveTransferButton).setOnClickListener {
@@ -79,14 +84,11 @@ class EditTransferActivity : AppCompatActivity() {
     private fun loadInitialData() {
         db.collection("accounts").get().addOnSuccessListener { accountDocs ->
             accountsList.clear()
-            val accountNames = mutableListOf<String>()
             for (doc in accountDocs) {
                 val account = doc.toObject(Account::class.java).copy(id = doc.id)
                 accountsList.add(account)
-                accountNames.add(account.name)
             }
-            accountSpinnerAdapter.clear()
-            accountSpinnerAdapter.addAll(accountNames)
+            // --- ИЗМЕНЕНИЕ: Просто уведомляем адаптер об изменениях ---
             accountSpinnerAdapter.notifyDataSetChanged()
 
             loadTransaction()
@@ -125,8 +127,9 @@ class EditTransferActivity : AppCompatActivity() {
             return
         }
 
-        val fromAccount = accountsList[fromAccountSpinner.selectedItemPosition]
-        val toAccount = accountsList[toAccountSpinner.selectedItemPosition]
+        // --- ИЗМЕНЕНИЕ: Получаем объекты напрямую из спиннера ---
+        val fromAccount = fromAccountSpinner.selectedItem as Account
+        val toAccount = toAccountSpinner.selectedItem as Account
 
         if (fromAccount.id == toAccount.id) {
             Toast.makeText(this, "Счета должны быть разными", Toast.LENGTH_SHORT).show()

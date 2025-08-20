@@ -35,19 +35,18 @@ class EditCategoryActivity : AppCompatActivity() {
     private lateinit var limitEditText: EditText
     private lateinit var typeRadioGroup: RadioGroup
     private lateinit var parentCategorySpinner: Spinner
-    // --- Новое: ссылки на кнопки для блокировки ---
     private lateinit var selectIconColorButton: Button
     private lateinit var selectBackgroundColorButton: Button
 
     private val allCategories = mutableListOf<Category>()
     private val possibleParents = mutableListOf<Category>()
-    private lateinit var parentSpinnerAdapter: ArrayAdapter<String>
+    // --- ИЗМЕНЕНИЕ: Меняем тип адаптера ---
+    private lateinit var parentSpinnerAdapter: CategorySpinnerAdapter
 
     private var selectedIconName: String? = null
     private var selectedIconColorHex: String? = null
     private var selectedBackgroundColorHex: String? = null
 
-    // --- Launchers без изменений ---
     private val iconPickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.getStringExtra("selectedIconName")?.let { selectedIconName = it; updateIconPreview() }
@@ -98,17 +97,15 @@ class EditCategoryActivity : AppCompatActivity() {
         findViewById<Button>(R.id.saveCategoryButton).setOnClickListener { saveChanges() }
         findViewById<Button>(R.id.deleteCategoryButton).setOnClickListener { confirmAndDelete() }
 
-        // --- НОВЫЙ СЛУШАТЕЛЬ: Динамическое перекрашивание при смене родителя ---
         parentCategorySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedParent = possibleParents[position]
-                if (selectedParent.id.isBlank()) { // Если выбрали "Нет (категория верхнего уровня)"
+                if (selectedParent.id.isBlank()) {
                     selectIconColorButton.isEnabled = true
                     selectBackgroundColorButton.isEnabled = true
-                } else { // Если выбрали родителя
+                } else {
                     selectIconColorButton.isEnabled = false
                     selectBackgroundColorButton.isEnabled = false
-                    // Находим цвета главного родителя и применяем их
                     var finalParent = selectedParent
                     while (finalParent.level != 0) {
                         finalParent = allCategories.find { it.id == finalParent.parentId } ?: break
@@ -153,10 +150,8 @@ class EditCategoryActivity : AppCompatActivity() {
         val sortedHierarchicalList = buildHierarchicalList(filteredList)
         possibleParents.addAll(sortedHierarchicalList)
 
-        val displayNames = possibleParents.map { "— ".repeat(it.level) + it.name }
-
-        parentSpinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, displayNames)
-        parentSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        // --- ИЗМЕНЕНИЕ: Используем новый CategorySpinnerAdapter ---
+        parentSpinnerAdapter = CategorySpinnerAdapter(this, possibleParents)
         parentCategorySpinner.adapter = parentSpinnerAdapter
 
         val parentIndex = possibleParents.indexOfFirst { it.id == currentCat.parentId }
@@ -177,7 +172,6 @@ class EditCategoryActivity : AppCompatActivity() {
             findViewById<RadioButton>(R.id.incomeRadioButton).isEnabled = false
         }
 
-        // --- НОВОЕ: Блокируем кнопки, если это подкатегория ---
         if (category.level > 0) {
             selectIconColorButton.isEnabled = false
             selectBackgroundColorButton.isEnabled = false
@@ -196,7 +190,8 @@ class EditCategoryActivity : AppCompatActivity() {
         val name = categoryNameEditText.text.toString()
         val type = if (typeRadioGroup.checkedRadioButtonId == R.id.expenseRadioButton) "EXPENSE" else "INCOME"
 
-        val selectedParent = possibleParents[parentCategorySpinner.selectedItemPosition]
+        // --- ИЗМЕНЕНИЕ: Получаем объект напрямую из спиннера ---
+        val selectedParent = parentCategorySpinner.selectedItem as Category
         val newParentId = selectedParent.id
         val newLevel = if (newParentId.isBlank()) 0 else (allCategories.find { it.id == newParentId }?.level ?: 0) + 1
 
@@ -210,15 +205,12 @@ class EditCategoryActivity : AppCompatActivity() {
             level = newLevel
         )
 
-        // --- НОВОЕ: Логика каскадного обновления цветов ---
         val colorsHaveChanged = initialCategory.iconColor != updatedCategory.iconColor || initialCategory.backgroundColor != updatedCategory.backgroundColor
         val isTopLevel = updatedCategory.level == 0
 
         if (isTopLevel && colorsHaveChanged) {
-            // Если изменился цвет у родителя, обновляем всех потомков
             updateDescendantColors(updatedCategory)
         } else {
-            // Иначе просто сохраняем одну категорию
             db.collection("categories").document(updatedCategory.id).set(updatedCategory)
                 .addOnSuccessListener {
                     Toast.makeText(this, "Категория обновлена", Toast.LENGTH_SHORT).show()
@@ -229,7 +221,6 @@ class EditCategoryActivity : AppCompatActivity() {
 
     private fun updateDescendantColors(parentCategory: Category) {
         val batch = db.batch()
-        // Сначала сохраняем саму родительскую категорию
         batch.set(db.collection("categories").document(parentCategory.id), parentCategory)
 
         val descendants = mutableSetOf<String>()
@@ -253,7 +244,6 @@ class EditCategoryActivity : AppCompatActivity() {
         }
     }
 
-    // --- Вспомогательные функции без существенных изменений ---
     private fun findDescendants(parentId: String, all: List<Category>, result: MutableSet<String>) {
         all.filter { it.parentId == parentId }.forEach { child ->
             result.add(child.id); findDescendants(child.id, all, result)

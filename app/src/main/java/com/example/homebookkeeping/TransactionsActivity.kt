@@ -41,7 +41,8 @@ class TransactionsActivity : AppCompatActivity() {
 
     private lateinit var transactionAdapter: TransactionAdapter
     private lateinit var typeSpinnerAdapter: ArrayAdapter<String>
-    private lateinit var accountSpinnerAdapter: ArrayAdapter<String>
+    // --- ИЗМЕНЕНИЕ: Меняем тип адаптера ---
+    private lateinit var accountSpinnerAdapter: AccountSpinnerAdapter
 
     private var transactionListener: ListenerRegistration? = null
     private var accountsListener: ListenerRegistration? = null
@@ -53,8 +54,6 @@ class TransactionsActivity : AppCompatActivity() {
     private var currentTypeFilter: String = "Все"
     private var currentAccountFilterId: String? = null
 
-    // --- УДАЛЕНИЕ: Переменная isInitialLoad больше не нужна ---
-    // private var isInitialLoad = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,8 +94,9 @@ class TransactionsActivity : AppCompatActivity() {
         typeSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         typeFilterSpinner.adapter = typeSpinnerAdapter
 
-        accountSpinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, mutableListOf("Все счета"))
-        accountSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        // --- ИЗМЕНЕНИЕ: Инициализируем новый адаптер с пустым списком ---
+        // Мы добавим специальный элемент "Все счета" позже, при загрузке данных
+        accountSpinnerAdapter = AccountSpinnerAdapter(this, listOf())
         accountFilterSpinner.adapter = accountSpinnerAdapter
     }
 
@@ -110,7 +110,6 @@ class TransactionsActivity : AppCompatActivity() {
             transactionsHeaderTextView.text = "Все операции"
             currentStartDate = null
             currentEndDate = null
-            // --- ИЗМЕНЕНИЕ: Запускаем перезагрузку данных, а не просто фильтрацию ---
             listenForTransactions()
         }
 
@@ -140,7 +139,13 @@ class TransactionsActivity : AppCompatActivity() {
         accountFilterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 HapticFeedbackHelper.viberate(this@TransactionsActivity)
-                currentAccountFilterId = if (position == 0) null else accountsList[position - 1].id
+                // --- ИЗМЕНЕНИЕ: Получаем объект напрямую из адаптера ---
+                val selectedAccount = parent?.getItemAtPosition(position) as? Account
+                if (selectedAccount != null && selectedAccount.id != "ALL_ACCOUNTS_DUMMY_ID") {
+                    currentAccountFilterId = selectedAccount.id
+                } else {
+                    currentAccountFilterId = null // "Все счета" выбрано
+                }
                 applyFilters()
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -175,7 +180,6 @@ class TransactionsActivity : AppCompatActivity() {
         transactionsRecyclerView.visibility = View.GONE
         transactionListener?.remove()
 
-        // --- УЛУЧШЕНИЕ: Строим запрос к БД с учетом фильтра по дате ---
         var query: Query = db.collection("transactions")
         if (currentStartDate != null && currentEndDate != null) {
             query = query.whereGreaterThanOrEqualTo("timestamp", currentStartDate!!)
@@ -196,17 +200,14 @@ class TransactionsActivity : AppCompatActivity() {
             }
             applyFilters()
 
-            // --- ИСПРАВЛЕНИЕ: Прячем загрузку каждый раз после успешного получения данных ---
             progressBar.visibility = View.GONE
             transactionsRecyclerView.visibility = View.VISIBLE
         }
     }
 
     private fun applyFilters() {
-        // --- ИЗМЕНЕНИЕ: Неиспользуемая переменная accountsMap удалена. ---
         val categoriesMap = categoriesList.associateBy { it.id }
 
-        // --- ИЗМЕНЕНИЕ: Фильтрация по дате теперь не нужна, т.к. ее делает запрос к БД ---
         val filteredList = allTransactionsList.filter { transaction ->
             val matchesType = currentTypeFilter == "Все" || transaction.type == currentTypeFilter
             val matchesAccount = currentAccountFilterId == null || transaction.accountId == currentAccountFilterId || transaction.toAccountId == currentAccountFilterId
@@ -226,15 +227,22 @@ class TransactionsActivity : AppCompatActivity() {
         accountsListener = db.collection("accounts").addSnapshotListener { snapshots, e ->
             if (e != null) { return@addSnapshotListener }
             accountsList.clear()
-            val accountNames = mutableListOf("Все счета")
+
+            // --- ИЗМЕНЕНИЕ: Создаем временный список для спиннера ---
+            val spinnerAccounts = mutableListOf<Account>()
+            // Добавляем фиктивный элемент "Все счета" в начало
+            spinnerAccounts.add(Account(id = "ALL_ACCOUNTS_DUMMY_ID", name = "Все счета"))
+
             for (doc in snapshots!!) {
                 val account = doc.toObject(Account::class.java).copy(id = doc.id)
-                accountsList.add(account)
-                accountNames.add(account.name)
+                accountsList.add(account) // Наполняем основной список
+                spinnerAccounts.add(account) // Наполняем список для спиннера
             }
-            accountSpinnerAdapter.clear()
-            accountSpinnerAdapter.addAll(accountNames)
-            accountSpinnerAdapter.notifyDataSetChanged()
+
+            // Обновляем адаптер новым списком
+            accountSpinnerAdapter = AccountSpinnerAdapter(this, spinnerAccounts)
+            accountFilterSpinner.adapter = accountSpinnerAdapter
+
             applyFilters()
         }
     }

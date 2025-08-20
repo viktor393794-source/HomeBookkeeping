@@ -34,8 +34,9 @@ class EditTransactionActivity : AppCompatActivity() {
     private val allCategories = mutableListOf<Category>()
     private val hierarchicalCategories = mutableListOf<Category>()
 
-    private lateinit var accountSpinnerAdapter: ArrayAdapter<String>
-    private lateinit var categorySpinnerAdapter: ArrayAdapter<String>
+    // --- ИЗМЕНЕНИЕ: Меняем тип адаптеров ---
+    private lateinit var accountSpinnerAdapter: AccountSpinnerAdapter
+    private lateinit var categorySpinnerAdapter: CategorySpinnerAdapter
 
     private var selectedDate: Calendar = Calendar.getInstance()
 
@@ -65,12 +66,11 @@ class EditTransactionActivity : AppCompatActivity() {
     }
 
     private fun setupSpinners() {
-        accountSpinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, mutableListOf())
-        accountSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        // --- ИЗМЕНЕНИЕ: Инициализируем новые адаптеры ---
+        accountSpinnerAdapter = AccountSpinnerAdapter(this, accountsList)
         accountSpinner.adapter = accountSpinnerAdapter
 
-        categorySpinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, mutableListOf())
-        categorySpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        categorySpinnerAdapter = CategorySpinnerAdapter(this, hierarchicalCategories)
         categorySpinner.adapter = categorySpinnerAdapter
     }
 
@@ -97,9 +97,8 @@ class EditTransactionActivity : AppCompatActivity() {
     private fun loadInitialData() {
         db.collection("accounts").get().addOnSuccessListener { accountDocs ->
             accountsList.clear()
-            val accountNames = accountDocs.map { it.toObject(Account::class.java).name }
-            accountSpinnerAdapter.clear(); accountSpinnerAdapter.addAll(accountNames); accountSpinnerAdapter.notifyDataSetChanged()
             accountsList.addAll(accountDocs.map { it.toObject(Account::class.java).copy(id = it.id) })
+            accountSpinnerAdapter.notifyDataSetChanged() // Обновляем адаптер
 
             db.collection("categories").get().addOnSuccessListener { categoryDocs ->
                 allCategories.clear()
@@ -142,8 +141,9 @@ class EditTransactionActivity : AppCompatActivity() {
             Toast.makeText(this, "Заполните все поля", Toast.LENGTH_SHORT).show()
             return
         }
-        val newAccount = accountsList[accountSpinner.selectedItemPosition]
-        val newCategory = hierarchicalCategories[categorySpinner.selectedItemPosition]
+        // --- ИЗМЕНЕНИЕ: Получаем объекты напрямую из спиннера ---
+        val newAccount = accountSpinner.selectedItem as Account
+        val newCategory = categorySpinner.selectedItem as Category
 
         val isLeafCategory = allCategories.none { it.parentId == newCategory.id }
         if (!isLeafCategory) {
@@ -196,8 +196,6 @@ class EditTransactionActivity : AppCompatActivity() {
             Toast.makeText(this, "Ошибка обновления: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
-
-    // --- ВОЗВРАЩЕННЫЕ МЕТОДЫ ---
 
     private fun confirmAndDelete() {
         AlertDialog.Builder(this)
@@ -263,9 +261,7 @@ class EditTransactionActivity : AppCompatActivity() {
         }
         addChildren("", 0)
 
-        val displayNames = hierarchicalCategories.map { "— ".repeat(it.level) + it.name }
-        categorySpinnerAdapter.clear()
-        categorySpinnerAdapter.addAll(displayNames)
+        // --- ИЗМЕНЕНИЕ: Просто обновляем адаптер ---
         categorySpinnerAdapter.notifyDataSetChanged()
     }
 }
