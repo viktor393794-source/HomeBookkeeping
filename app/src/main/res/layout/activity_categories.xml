@@ -53,6 +53,6 @@
         app:tint="@android:color/white"
         android:contentDescription="Добавить категорию"
         app:borderWidth="2dp"
-        app:borderColor="?attr/colorPrimary"/>
+        app:strokeColor="#6200EE"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
