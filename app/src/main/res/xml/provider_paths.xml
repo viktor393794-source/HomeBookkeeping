@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Указываем, что мы разрешаем доступ к публичной папке "Загрузки" -->
+    <external-path
+        name="external_files"
+        path="Download/" />
+</paths>
