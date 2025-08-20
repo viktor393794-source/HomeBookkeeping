@@ -45,7 +45,6 @@ class MainActivity : AppCompatActivity() {
     private val allCategories = mutableListOf<Category>()
     private val hierarchicalCategories = mutableListOf<Category>()
 
-    // --- ИЗМЕНЕНИЕ: Меняем тип адаптеров ---
     private lateinit var accountSpinnerAdapter: AccountSpinnerAdapter
     private lateinit var categorySpinnerAdapter: CategorySpinnerAdapter
 
@@ -99,7 +98,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupSpinners() {
-        // --- ИЗМЕНЕНИЕ: Инициализируем новые адаптеры с пустыми списками ---
         accountSpinnerAdapter = AccountSpinnerAdapter(this, accountsList)
         fromAccountSpinner.adapter = accountSpinnerAdapter
         toAccountSpinner.adapter = accountSpinnerAdapter
@@ -132,6 +130,11 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.allTransactionsButton).setOnClickListener {
             HapticFeedbackHelper.viberate(this)
             startActivity(Intent(this, TransactionsActivity::class.java))
+        }
+        // --- ДОБАВЛЯЕМ СЛУШАТЕЛЬ ДЛЯ НОВОЙ КНОПКИ ---
+        findViewById<Button>(R.id.planningButton).setOnClickListener {
+            HapticFeedbackHelper.viberate(this)
+            startActivity(Intent(this, BudgetPlanningActivity::class.java))
         }
         operationTypeRadioGroup.setOnCheckedChangeListener { _, checkedId ->
             HapticFeedbackHelper.viberate(this)
@@ -295,7 +298,6 @@ class MainActivity : AppCompatActivity() {
             }
             totalBalanceTextView.setTextColor(balanceColor)
 
-            // --- ИЗМЕНЕНИЕ: Обновляем адаптер ---
             accountSpinnerAdapter.notifyDataSetChanged()
         }
     }
@@ -325,7 +327,6 @@ class MainActivity : AppCompatActivity() {
         }
         addChildren("", 0)
 
-        // --- ИЗМЕНЕНИЕ: Обновляем адаптер ---
         categorySpinnerAdapter.notifyDataSetChanged()
     }
 }

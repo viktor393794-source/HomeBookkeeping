@@ -20,11 +20,10 @@
             android:layout_height="?attr/actionBarSize"
             app:theme="@style/ThemeOverlay.Material3.Dark.ActionBar">
 
-            <!-- ИЗМЕНЕННЫЙ МАКЕТ ТУЛБАРА -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginEnd="16dp"> <!-- Отступ справа, чтобы меню настроек не наезжало -->
+                android:layout_marginEnd="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -177,52 +176,59 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <LinearLayout
+            <GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp">
+                android:layout_marginTop="16dp"
+                android:columnCount="2"
+                android:rowCount="2">
+
                 <Button
                     android:id="@+id/manageAccountsButton"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    style="@style/Widget.Material3.Button.OutlinedButton.Icon"
+                    android:layout_columnWeight="1"
+                    android:layout_gravity="fill_horizontal"
                     android:text="Счета"
-                    android:textSize="12sp"
-                    app:iconSize="18dp"
-                    app:icon="@drawable/ic_default_wallet"
-                    android:background="@drawable/button_secondary_background"
                     android:textColor="@android:color/black"
-                    android:layout_marginEnd="4dp"/>
+                    android:layout_margin="4dp"
+                    app:icon="@drawable/ic_default_wallet"
+                    app:iconTint="?attr/colorPrimary"
+                    app:iconGravity="textStart"/>
                 <Button
                     android:id="@+id/manageCategoriesButton"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    style="@style/Widget.Material3.Button.OutlinedButton.Icon"
+                    android:layout_columnWeight="1"
+                    android:layout_gravity="fill_horizontal"
                     android:text="Категории"
-                    android:textSize="12sp"
-                    app:iconSize="18dp"
-                    app:icon="@drawable/ic_category"
-                    android:background="@drawable/button_secondary_background"
                     android:textColor="@android:color/black"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
+                    android:layout_margin="4dp"
+                    app:icon="@drawable/ic_category"
+                    app:iconTint="?attr/colorPrimary"
+                    app:iconGravity="textStart"/>
                 <Button
                     android:id="@+id/statsButton"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    style="@style/Widget.Material3.Button.OutlinedButton.Icon"
+                    android:layout_columnWeight="1"
+                    android:layout_gravity="fill_horizontal"
                     android:text="Статистика"
-                    android:textSize="12sp"
-                    app:iconSize="18dp"
-                    app:icon="@drawable/ic_stats"
-                    android:background="@drawable/button_secondary_background"
                     android:textColor="@android:color/black"
-                    android:layout_marginStart="4dp"/>
-            </LinearLayout>
+                    android:layout_margin="4dp"
+                    app:icon="@drawable/ic_stats"
+                    app:iconTint="?attr/colorPrimary"
+                    app:iconGravity="textStart"/>
+                <Button
+                    android:id="@+id/planningButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton.Icon"
+                    android:layout_columnWeight="1"
+                    android:layout_gravity="fill_horizontal"
+                    android:text="Планирование"
+                    android:textColor="@android:color/black"
+                    android:layout_margin="4dp"
+                    app:icon="@drawable/ic_receipt"
+                    app:iconTint="?attr/colorPrimary"
+                    app:iconGravity="textStart"/>
+
+            </GridLayout>
 
             <Button
                 android:id="@+id/allTransactionsButton"
