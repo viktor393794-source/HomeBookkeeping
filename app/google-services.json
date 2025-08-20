@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "454480552791",
+    "project_id": "homebookkeeping-9ca05",
+    "storage_bucket": "homebookkeeping-9ca05.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:454480552791:android:ce4b773444ec7a4a4f1412",
+        "android_client_info": {
+          "package_name": "com.example.homebookkeeping"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-I4MbbfHuTkcn8FSgc-lA9aObr6AhRPg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

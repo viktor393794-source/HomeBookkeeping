@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context=".AddCategoryActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Новая категория"
+            android:textSize="22sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/parentCategoryInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/form_background"
+            android:padding="12dp"
+            android:visibility="gone"
+            tools:text="Подкатегория для: Продукты"
+            tools:visibility="visible" />
+
+        <EditText
+            android:id="@+id/categoryNameEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="Название (напр., Продукты)"
+            android:inputType="textCapSentences"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="16dp">
+            <ImageView
+                android:id="@+id/selectedIconImageView"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_launcher_background"
+                android:padding="8dp"/>
+            <Button
+                android:id="@+id/selectIconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="Выбрать иконку"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+            <View
+                android:id="@+id/iconColorPreview"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="#FFFFFF"/>
+            <Button
+                android:id="@+id/selectIconColorButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="Выбрать цвет иконки"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+            <View
+                android:id="@+id/backgroundColorPreview"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="#2196F3"/>
+            <Button
+                android:id="@+id/selectBackgroundColorButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="Выбрать цвет фона"/>
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/limitEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="Лимит трат в месяц (0 - нет лимита)"
+            android:inputType="numberDecimal"/>
+
+        <RadioGroup
+            android:id="@+id/categoryTypeRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+            <RadioButton
+                android:id="@+id/expenseRadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Расход"
+                android:checked="true"/>
+            <RadioButton
+                android:id="@+id/incomeRadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="Доход"/>
+        </RadioGroup>
+
+        <Button
+            android:id="@+id/saveCategoryButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Сохранить категорию"/>
+
+    </LinearLayout>
+</ScrollView>

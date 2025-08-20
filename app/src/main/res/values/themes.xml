@@ -1,0 +1,36 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Основная тема вашего приложения - теперь всегда СВЕТЛАЯ,
+         игнорируя системные настройки тёмной темы. -->
+    <style name="Base.Theme.HomeBookkeeping" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Здесь вы можете настроить основные цвета вашей светлой темы.
+             Например:
+             <item name="colorPrimary">@color/your_app_primary_color</item>
+             <item name="colorSecondary">@color/your_app_secondary_color</item>
+             и т.д. -->
+    </style>
+
+    <!-- Ваша основная тема приложения, которая наследуется от базовой светлой темы. -->
+    <style name="Theme.HomeBookkeeping" parent="Base.Theme.HomeBookkeeping" />
+
+    <!-- Тема для экрана-заставки.
+         Мы также устанавливаем её на СВЕТЛУЮ тему, чтобы обеспечить единообразный вид
+         с остальным приложением, и явно указываем белый фон. -->
+    <style name="Theme.App.SplashScreen" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Устанавливаем фон окна заставки явно белым.
+             Убедитесь, что ваш макет activity_splash.xml также хорошо смотрится
+             на светлом фоне или сам определяет свой фон. -->
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+    </style>
+
+    <style name="Widget.App.KeypadButton" parent="Widget.Material3.Button.TextButton">
+        <item name="android:layout_width">80dp</item>
+        <item name="android:layout_height">80dp</item>
+        <item name="android:layout_margin">8dp</item>
+        <item name="android:textSize">24sp</item>
+    </style>
+</resources>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:fitsSystemWindows="true" tools:context=".EditTransactionActivity">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Редактировать операцию"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
+
+        <RadioGroup
+            android:id="@+id/operationTypeRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+            <RadioButton
+                android:id="@+id/expenseRadioButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Расход"/>
+            <RadioButton
+                android:id="@+id/incomeRadioButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Доход"/>
+        </RadioGroup>
+
+        <EditText
+            android:id="@+id/amountEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Сумма"
+            android:inputType="numberDecimal"
+            android:layout_marginTop="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Счет:"
+            android:layout_marginTop="8dp"/>
+        <Spinner
+            android:id="@+id/accountSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Категория:"
+            android:layout_marginTop="8dp"/>
+        <Spinner
+            android:id="@+id/categorySpinner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"/>
+
+        <Button
+            android:id="@+id/dateButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Выберите дату"/>
+
+        <EditText
+            android:id="@+id/descriptionEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Описание (необязательно)"
+            android:inputType="text"
+            android:layout_marginTop="8dp"/>
+
+        <Button
+            android:id="@+id/saveTransactionButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Сохранить изменения"/>
+
+        <Button
+            android:id="@+id/deleteTransactionButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Удалить операцию"
+            android:backgroundTint="@android:color/holo_red_light"/>
+
+    </LinearLayout>
+</ScrollView>

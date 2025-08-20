@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Разрешение на использование вибрации -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application
+        android:name=".MainApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.HomeBookkeeping">
+
+        <!-- Все экраны вашего приложения -->
+        <activity
+            android:name=".SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.App.SplashScreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".MainActivity" />
+        <activity android:name=".AccountsActivity" />
+        <activity android:name=".CategoriesActivity" />
+        <activity android:name=".EditAccountActivity" />
+        <activity android:name=".EditCategoryActivity" />
+        <activity android:name=".IconPickerActivity" />
+        <activity android:name=".ColorPickerActivity" />
+        <activity android:name=".TransactionsActivity" />
+        <activity android:name=".EditTransactionActivity" />
+        <activity android:name=".EditTransferActivity" />
+        <activity android:name=".StatsActivity" />
+        <activity android:name=".CategoryDetailsActivity" />
+        <!-- Новые экраны, которые мы добавили -->
+        <activity android:name=".AddAccountActivity" />
+        <activity android:name=".AddCategoryActivity" />
+        <activity android:name=".SettingsActivity" />
+        <activity android:name=".LockScreenActivity" />
+        <activity android:name=".CreatePasscodeActivity" />
+
+    </application>
+
+</manifest>

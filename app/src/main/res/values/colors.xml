@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Вот эти строки нужно добавить -->
+    <color name="colorExpense">#D32F2F</color> <!-- Например, красный цвет для расходов -->
+    <color name="colorIncome">#388E3C</color>  <!-- Например, зеленый цвет для доходов -->
+</resources>

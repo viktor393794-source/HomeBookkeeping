@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:background="?attr/selectableItemBackground">
+
+    <!-- Контейнер для иконки -->
+    <FrameLayout
+        android:id="@+id/iconContainer"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/icon_background">
+
+        <ImageView
+            android:id="@+id/categoryIconImageView"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            app:tint="@color/white"
+            tools:src="@drawable/ic_shopping_cart" />
+    </FrameLayout>
+
+    <!-- Описание, счет и ДАТА -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/descriptionTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Описание траты"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"/>
+
+        <TextView
+            android:id="@+id/accountNameTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Название счета"
+            android:textSize="12sp" />
+
+        <!-- НОВОЕ ПОЛЕ ДЛЯ ДАТЫ -->
+        <TextView
+            android:id="@+id/dateTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="14.08.2025"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Сумма операции -->
+    <TextView
+        android:id="@+id/amountTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="-100.00"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

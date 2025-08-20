@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Свиной бюджет</string>
+    <string name="select_account">Выберите счет</string>
+    <string name="select_category">Выберите категорию</string>
+</resources>
