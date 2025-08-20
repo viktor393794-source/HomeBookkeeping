@@ -2,4 +2,7 @@
     <string name="app_name">Свиной бюджет</string>
     <string name="select_account">Выберите счет</string>
     <string name="select_category">Выберите категорию</string>
+    <!-- НОВЫЕ СТРОКИ ДЛЯ УВЕДОМЛЕНИЙ -->
+    <string name="notification_channel_name">Напоминания о бюджете</string>
+    <string name="notification_channel_description">Напоминания о необходимости внести транзакции</string>
 </resources>

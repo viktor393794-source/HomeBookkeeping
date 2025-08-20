@@ -88,7 +88,6 @@
                 android:text="Разрешить использовать биометрию"
                 android:layout_marginStart="16dp"/>
 
-
             <TextView
                 android:id="@+id/changePinButton"
                 android:layout_width="match_parent"
@@ -101,7 +100,35 @@
                 android:focusable="true"
                 android:background="?attr/selectableItemBackground"/>
 
-            <!-- НОВЫЙ РАЗДЕЛ ОБНОВЛЕНИЯ -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="УВЕДОМЛЕНИЯ"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorPrimary"/>
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/remindersSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Ежедневные напоминания"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/reminderTimeButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"
+                tools:text="Время напоминания: 20:00"/>
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

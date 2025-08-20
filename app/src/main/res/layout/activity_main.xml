@@ -176,6 +176,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- ИСПРАВЛЕННАЯ СЕТКА КНОПОК 2x2 -->
             <GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -227,9 +228,22 @@
                     app:icon="@drawable/ic_receipt"
                     app:iconTint="?attr/colorPrimary"
                     app:iconGravity="textStart"/>
-
             </GridLayout>
 
+            <!-- ОТДЕЛЬНЫЕ КНОПКИ ПОД СЕТКОЙ -->
+            <Button
+                android:id="@+id/recurringButton"
+                style="@style/Widget.Material3.Button.OutlinedButton.Icon"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Регулярные"
+                android:textColor="@android:color/black"
+                app:icon="@drawable/ic_starr"
+                app:iconTint="?attr/colorPrimary"
+                app:iconGravity="textStart"/>
+
+            <!-- КНОПКА "ВСЕ ОПЕРАЦИИ" В ОРИГИНАЛЬНОМ СТИЛЕ -->
             <Button
                 android:id="@+id/allTransactionsButton"
                 android:layout_width="match_parent"

@@ -1,7 +1,11 @@
 package com.example.homebookkeeping
 
+import android.Manifest
+import android.app.AlarmManager
 import android.app.AlertDialog
 import android.app.DownloadManager
+import android.app.PendingIntent
+import android.app.TimePickerDialog
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -10,13 +14,16 @@ import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
+import android.provider.Settings
 import android.util.Log
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.security.crypto.EncryptedSharedPreferences
@@ -28,6 +35,7 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
 import java.net.URL
+import java.util.Calendar
 import javax.net.ssl.HttpsURLConnection
 import kotlin.concurrent.thread
 
@@ -40,15 +48,31 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var changePinButton: TextView
     private lateinit var checkUpdateButton: TextView
     private lateinit var versionTextView: TextView
+    // --- ИСПРАВЛЕНИЕ: Добавлены недостающие объявления ---
+    private lateinit var remindersSwitch: SwitchMaterial
+    private lateinit var reminderTimeButton: TextView
 
     companion object {
         const val PREFS_NAME = "app_settings"
         const val KEY_VIBRATION_ENABLED = "vibration_enabled"
         const val KEY_SECURITY_ENABLED = "security_enabled"
         const val KEY_BIOMETRICS_ENABLED = "biometrics_enabled"
-
+        const val KEY_REMINDERS_ENABLED = "reminders_enabled"
+        const val KEY_REMINDER_HOUR = "reminder_hour"
+        const val KEY_REMINDER_MINUTE = "reminder_minute"
         const val ENCRYPTED_PREFS_NAME = "secure_app_settings"
         const val KEY_PASSCODE = "passcode"
+    }
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            showTimePicker()
+        } else {
+            Toast.makeText(this, "Разрешение на уведомления не предоставлено", Toast.LENGTH_SHORT).show()
+            remindersSwitch.isChecked = false
+        }
     }
 
     private val createPasscodeLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -74,6 +98,9 @@ class SettingsActivity : AppCompatActivity() {
         changePinButton = findViewById(R.id.changePinButton)
         checkUpdateButton = findViewById(R.id.checkUpdateButton)
         versionTextView = findViewById(R.id.versionTextView)
+        // --- ИСПРАВЛЕНИЕ: Добавлены недостающие findViewById ---
+        remindersSwitch = findViewById(R.id.remindersSwitch)
+        reminderTimeButton = findViewById(R.id.reminderTimeButton)
 
         toolbar.setNavigationOnClickListener { finish() }
 
@@ -87,13 +114,12 @@ class SettingsActivity : AppCompatActivity() {
         vibrationSwitch.isChecked = sharedPreferences.getBoolean(KEY_VIBRATION_ENABLED, true)
         securitySwitch.isChecked = sharedPreferences.getBoolean(KEY_SECURITY_ENABLED, false)
         biometricsSwitch.isChecked = sharedPreferences.getBoolean(KEY_BIOMETRICS_ENABLED, true)
+        remindersSwitch.isChecked = sharedPreferences.getBoolean(KEY_REMINDERS_ENABLED, false)
+        updateReminderTimeText()
     }
 
     private fun setupListeners() {
-        vibrationSwitch.setOnCheckedChangeListener { _, isChecked ->
-            saveVibrationSetting(isChecked)
-        }
-
+        vibrationSwitch.setOnCheckedChangeListener { _, isChecked -> saveVibrationSetting(isChecked) }
         securitySwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 createPasscodeLauncher.launch(Intent(this, CreatePasscodeActivity::class.java))
@@ -104,18 +130,102 @@ class SettingsActivity : AppCompatActivity() {
                 updateUiState()
             }
         }
+        biometricsSwitch.setOnCheckedChangeListener { _, isChecked -> saveBiometricsSetting(isChecked) }
+        changePinButton.setOnClickListener { createPasscodeLauncher.launch(Intent(this, CreatePasscodeActivity::class.java)) }
+        checkUpdateButton.setOnClickListener { checkForUpdates() }
 
-        biometricsSwitch.setOnCheckedChangeListener { _, isChecked ->
-            saveBiometricsSetting(isChecked)
+        remindersSwitch.setOnCheckedChangeListener { _, isChecked ->
+            sharedPreferences.edit().putBoolean(KEY_REMINDERS_ENABLED, isChecked).apply()
+            if (isChecked) {
+                checkNotificationPermission()
+            } else {
+                cancelNotification()
+                Toast.makeText(this, "Напоминания отключены", Toast.LENGTH_SHORT).show()
+            }
+            updateUiState()
+        }
+        reminderTimeButton.setOnClickListener { showTimePicker() }
+    }
+
+    private fun updateUiState() {
+        val isSecurityEnabled = sharedPreferences.getBoolean(KEY_SECURITY_ENABLED, false)
+        val hasBiometrics = packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
+        val areRemindersEnabled = sharedPreferences.getBoolean(KEY_REMINDERS_ENABLED, false)
+
+        securitySwitch.isChecked = isSecurityEnabled
+        changePinButton.isVisible = isSecurityEnabled
+        biometricsSwitch.isVisible = isSecurityEnabled && hasBiometrics
+        reminderTimeButton.isVisible = areRemindersEnabled
+    }
+
+    private fun checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                showTimePicker()
+            } else {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        } else {
+            showTimePicker()
+        }
+    }
+
+    private fun showTimePicker() {
+        val hour = sharedPreferences.getInt(KEY_REMINDER_HOUR, 20)
+        val minute = sharedPreferences.getInt(KEY_REMINDER_MINUTE, 0)
+
+        TimePickerDialog(this, { _, selectedHour, selectedMinute ->
+            sharedPreferences.edit()
+                .putInt(KEY_REMINDER_HOUR, selectedHour)
+                .putInt(KEY_REMINDER_MINUTE, selectedMinute)
+                .apply()
+            scheduleNotification(selectedHour, selectedMinute)
+            updateReminderTimeText()
+        }, hour, minute, true).show()
+    }
+
+    private fun scheduleNotification(hour: Int, minute: Int) {
+        val intent = Intent(applicationContext, NotificationReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            applicationContext, 0, intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+            if (before(Calendar.getInstance())) {
+                add(Calendar.DATE, 1)
+            }
         }
 
-        changePinButton.setOnClickListener {
-            createPasscodeLauncher.launch(Intent(this, CreatePasscodeActivity::class.java))
-        }
+        alarmManager.setInexactRepeating(
+            AlarmManager.RTC_WAKEUP,
+            calendar.timeInMillis,
+            AlarmManager.INTERVAL_DAY,
+            pendingIntent
+        )
+        Toast.makeText(this, "Напоминание установлено на ${String.format("%02d:%02d", hour, minute)}", Toast.LENGTH_SHORT).show()
+    }
 
-        checkUpdateButton.setOnClickListener {
-            checkForUpdates()
+    private fun cancelNotification() {
+        val intent = Intent(applicationContext, NotificationReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            applicationContext, 0, intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE
+        )
+        if (pendingIntent != null) {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            alarmManager.cancel(pendingIntent)
         }
+    }
+
+    private fun updateReminderTimeText() {
+        val hour = sharedPreferences.getInt(KEY_REMINDER_HOUR, 20)
+        val minute = sharedPreferences.getInt(KEY_REMINDER_MINUTE, 0)
+        reminderTimeButton.text = "Время напоминания: ${String.format("%02d:%02d", hour, minute)}"
     }
 
     private fun checkForUpdates() {
@@ -123,8 +233,7 @@ class SettingsActivity : AppCompatActivity() {
 
         thread {
             try {
-                // !!! ВАЖНО: Замените "YOUR_USERNAME" и "YOUR_REPOSITORY" на ваши данные
-                val url = URL("https://api.github.com/repos/viktor393794-source/HomeBookkeeping/releases/latest")
+                val url = URL("https://api.github.com/repos/YOUR_USERNAME/YOUR_REPOSITORY/releases/latest")
                 val connection = url.openConnection() as HttpsURLConnection
                 connection.requestMethod = "GET"
                 connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
@@ -222,19 +331,7 @@ class SettingsActivity : AppCompatActivity() {
         registerReceiver(onComplete, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
     }
 
-
-    private fun isNewerVersion(latestVersion: String, currentVersion: String): Boolean {
-        return latestVersion > currentVersion
-    }
-
-    private fun updateUiState() {
-        val isSecurityEnabled = sharedPreferences.getBoolean(KEY_SECURITY_ENABLED, false)
-        val hasBiometrics = packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
-
-        securitySwitch.isChecked = isSecurityEnabled
-        changePinButton.isVisible = isSecurityEnabled
-        biometricsSwitch.isVisible = isSecurityEnabled && hasBiometrics
-    }
+    private fun isNewerVersion(latestVersion: String, currentVersion: String): Boolean { return latestVersion > currentVersion }
 
     private fun displayAppVersion() {
         try {
@@ -261,7 +358,6 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun clearPasscode() {
         try {
-            // --- ИСПРАВЛЕННЫЕ КОНСТАНТЫ ---
             val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
             val encryptedPrefs: SharedPreferences = EncryptedSharedPreferences.create(
                 ENCRYPTED_PREFS_NAME, masterKeyAlias, this,

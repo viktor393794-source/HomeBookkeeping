@@ -131,10 +131,14 @@ class MainActivity : AppCompatActivity() {
             HapticFeedbackHelper.viberate(this)
             startActivity(Intent(this, TransactionsActivity::class.java))
         }
-        // --- ДОБАВЛЯЕМ СЛУШАТЕЛЬ ДЛЯ НОВОЙ КНОПКИ ---
         findViewById<Button>(R.id.planningButton).setOnClickListener {
             HapticFeedbackHelper.viberate(this)
             startActivity(Intent(this, BudgetPlanningActivity::class.java))
+        }
+        // --- ДОБАВЛЯЕМ СЛУШАТЕЛЬ ДЛЯ НОВОЙ КНОПКИ ---
+        findViewById<Button>(R.id.recurringButton).setOnClickListener {
+            HapticFeedbackHelper.viberate(this)
+            startActivity(Intent(this, RecurringTransactionsActivity::class.java))
         }
         operationTypeRadioGroup.setOnCheckedChangeListener { _, checkedId ->
             HapticFeedbackHelper.viberate(this)
