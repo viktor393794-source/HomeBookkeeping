@@ -4,44 +4,40 @@ import android.app.Activity
 import android.app.Application
 import android.content.Intent
 import android.os.Bundle
+import com.google.firebase.FirebaseApp // <-- ВАЖНЫЙ ИМПОРТ
 import java.util.concurrent.TimeUnit
 
 class MainApplication : Application(), Application.ActivityLifecycleCallbacks {
 
     private var appStopTime: Long = -1
-    // Флаг, который предотвращает "гонку состояний"
     private var isNavigatingToLockScreen = false
 
     override fun onCreate() {
         super.onCreate()
+        // Принудительная инициализация Firebase при старте приложения
+        FirebaseApp.initializeApp(this) // <-- ДОБАВЛЕНА ЭТА СТРОКА
         registerActivityLifecycleCallbacks(this)
     }
 
     override fun onActivityStarted(activity: Activity) {
-        // Исключаем служебные экраны, которые не должны вызывать блокировку
         if (activity is LockScreenActivity || activity is CreatePasscodeActivity || activity is SplashActivity) {
             appStopTime = -1
             return
         }
 
-        // Если мы вернулись на обычный экран, сбрасываем флаг
         isNavigatingToLockScreen = false
 
         if (shouldShowLockScreen()) {
-            // Устанавливаем флаг ПЕРЕД запуском экрана блокировки
             isNavigatingToLockScreen = true
             val intent = Intent(activity, LockScreenActivity::class.java)
             activity.startActivity(intent)
-            // Важно: не сбрасываем таймер здесь, чтобы избежать цикла
             return
         }
 
-        // Сбрасываем таймер только если блокировка не нужна
         appStopTime = -1
     }
 
     override fun onActivityStopped(activity: Activity) {
-        // Устанавливаем таймер, только если мы НЕ переключаемся на экран блокировки намеренно
         if (!isNavigatingToLockScreen) {
             appStopTime = System.currentTimeMillis()
         }

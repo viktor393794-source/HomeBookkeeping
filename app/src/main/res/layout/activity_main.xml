@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -176,7 +175,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- ИСПРАВЛЕННАЯ СЕТКА КНОПОК 2x2 -->
             <GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -193,7 +191,6 @@
                     android:textColor="@android:color/black"
                     android:layout_margin="4dp"
                     app:icon="@drawable/ic_default_wallet"
-                    app:iconTint="?attr/colorPrimary"
                     app:iconGravity="textStart"/>
                 <Button
                     android:id="@+id/manageCategoriesButton"
@@ -204,7 +201,6 @@
                     android:textColor="@android:color/black"
                     android:layout_margin="4dp"
                     app:icon="@drawable/ic_category"
-                    app:iconTint="?attr/colorPrimary"
                     app:iconGravity="textStart"/>
                 <Button
                     android:id="@+id/statsButton"
@@ -215,7 +211,6 @@
                     android:textColor="@android:color/black"
                     android:layout_margin="4dp"
                     app:icon="@drawable/ic_stats"
-                    app:iconTint="?attr/colorPrimary"
                     app:iconGravity="textStart"/>
                 <Button
                     android:id="@+id/planningButton"
@@ -226,11 +221,9 @@
                     android:textColor="@android:color/black"
                     android:layout_margin="4dp"
                     app:icon="@drawable/ic_receipt"
-                    app:iconTint="?attr/colorPrimary"
                     app:iconGravity="textStart"/>
             </GridLayout>
 
-            <!-- ОТДЕЛЬНЫЕ КНОПКИ ПОД СЕТКОЙ -->
             <Button
                 android:id="@+id/recurringButton"
                 style="@style/Widget.Material3.Button.OutlinedButton.Icon"
@@ -243,7 +236,6 @@
                 app:iconTint="?attr/colorPrimary"
                 app:iconGravity="textStart"/>
 
-            <!-- КНОПКА "ВСЕ ОПЕРАЦИИ" В ОРИГИНАЛЬНОМ СТИЛЕ -->
             <Button
                 android:id="@+id/allTransactionsButton"
                 android:layout_width="match_parent"

@@ -51,8 +51,9 @@
         <activity android:name=".BudgetPlanningActivity" />
         <activity android:name=".RecurringTransactionsActivity" />
         <activity android:name=".AddRecurringTransactionActivity" />
-        <!-- РЕГИСТРИРУЕМ НОВЫЙ ЭКРАН -->
         <activity android:name=".BudgetManagementActivity" />
+
+        <activity android:name=".BudgetSelectionActivity" />
 
         <receiver android:name=".NotificationReceiver" android:enabled="true" />
 

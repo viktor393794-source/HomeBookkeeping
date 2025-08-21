@@ -1,15 +1,16 @@
 package com.example.homebookkeeping
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
@@ -24,6 +25,10 @@ class BudgetManagementActivity : AppCompatActivity() {
     private lateinit var inviteEmailEditText: EditText
     private lateinit var inviteButton: Button
 
+    // --- НОВЫЕ ЭЛЕМЕНТЫ ИНТЕРФЕЙСА ---
+    private lateinit var budgetIdTextView: TextView
+    private lateinit var shareBudgetIdButton: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_budget_management)
@@ -33,6 +38,10 @@ class BudgetManagementActivity : AppCompatActivity() {
         membersRecyclerView = findViewById(R.id.membersRecyclerView)
         inviteEmailEditText = findViewById(R.id.inviteEmailEditText)
         inviteButton = findViewById(R.id.inviteButton)
+
+        // --- Находим новые элементы ---
+        budgetIdTextView = findViewById(R.id.budgetIdTextView)
+        shareBudgetIdButton = findViewById(R.id.shareBudgetIdButton)
 
         membersRecyclerView.layoutManager = LinearLayoutManager(this)
 
@@ -55,7 +64,21 @@ class BudgetManagementActivity : AppCompatActivity() {
         }
 
         inviteButton.setOnClickListener {
-            inviteUser()
+            inviteUserByEmail()
+        }
+
+        // --- НОВЫЙ ОБРАБОТЧИК ДЛЯ КНОПКИ "ПОДЕЛИТЬСЯ" ---
+        shareBudgetIdButton.setOnClickListener {
+            val budgetId = budgetIdTextView.text.toString()
+            if (budgetId.isNotEmpty()) {
+                val sendIntent: Intent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, "Привет! Присоединяйся к моему бюджету в приложении 'Свиной Бюджет'. Вот ID для подключения: $budgetId")
+                    type = "text/plain"
+                }
+                val shareIntent = Intent.createChooser(sendIntent, "Поделиться ID бюджета через")
+                startActivity(shareIntent)
+            }
         }
     }
 
@@ -72,22 +95,26 @@ class BudgetManagementActivity : AppCompatActivity() {
     private fun updateUI() {
         currentBudget?.let {
             budgetNameEditText.setText(it.name)
+            // --- Устанавливаем ID бюджета в текстовое поле ---
+            budgetIdTextView.text = it.id
+
             val membersList = it.members.values.toList()
             membersRecyclerView.adapter = MemberAdapter(membersList)
 
-            // Только владелец может приглашать
-            inviteButton.isEnabled = auth.currentUser?.uid == it.ownerId
+            val isOwner = auth.currentUser?.uid == it.ownerId
+            // Только владелец может приглашать и делиться
+            inviteButton.isEnabled = isOwner
+            shareBudgetIdButton.isEnabled = isOwner
         }
     }
 
-    private fun inviteUser() {
+    private fun inviteUserByEmail() {
         val email = inviteEmailEditText.text.toString().trim()
         if (email.isBlank()) {
             Toast.makeText(this, "Введите email", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // 1. Находим пользователя по email
         db.collection("users").whereEqualTo("email", email).limit(1).get()
             .addOnSuccessListener { userSnapshot ->
                 if (userSnapshot.isEmpty) {
@@ -102,7 +129,6 @@ class BudgetManagementActivity : AppCompatActivity() {
                     return@addOnSuccessListener
                 }
 
-                // 2. Добавляем пользователя в бюджет
                 val budgetId = BudgetManager.currentBudgetId!!
                 db.collection("budgets").document(budgetId)
                     .update("members.${invitedUserId}", email)
