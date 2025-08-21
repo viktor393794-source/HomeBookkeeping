@@ -24,8 +24,6 @@ class BudgetManagementActivity : AppCompatActivity() {
     private lateinit var membersRecyclerView: RecyclerView
     private lateinit var inviteEmailEditText: EditText
     private lateinit var inviteButton: Button
-
-    // --- НОВЫЕ ЭЛЕМЕНТЫ ИНТЕРФЕЙСА ---
     private lateinit var budgetIdTextView: TextView
     private lateinit var shareBudgetIdButton: Button
 
@@ -38,8 +36,6 @@ class BudgetManagementActivity : AppCompatActivity() {
         membersRecyclerView = findViewById(R.id.membersRecyclerView)
         inviteEmailEditText = findViewById(R.id.inviteEmailEditText)
         inviteButton = findViewById(R.id.inviteButton)
-
-        // --- Находим новые элементы ---
         budgetIdTextView = findViewById(R.id.budgetIdTextView)
         shareBudgetIdButton = findViewById(R.id.shareBudgetIdButton)
 
@@ -54,11 +50,13 @@ class BudgetManagementActivity : AppCompatActivity() {
             if (!hasFocus) {
                 val newName = budgetNameEditText.text.toString()
                 if (newName.isNotBlank() && newName != currentBudget?.name) {
-                    db.collection("budgets").document(currentBudget!!.id)
-                        .update("name", newName)
-                        .addOnSuccessListener {
-                            Toast.makeText(this, "Название бюджета обновлено", Toast.LENGTH_SHORT).show()
-                        }
+                    currentBudget?.id?.let {
+                        db.collection("budgets").document(it)
+                            .update("name", newName)
+                            .addOnSuccessListener {
+                                Toast.makeText(this, "Название бюджета обновлено", Toast.LENGTH_SHORT).show()
+                            }
+                    }
                 }
             }
         }
@@ -67,7 +65,6 @@ class BudgetManagementActivity : AppCompatActivity() {
             inviteUserByEmail()
         }
 
-        // --- НОВЫЙ ОБРАБОТЧИК ДЛЯ КНОПКИ "ПОДЕЛИТЬСЯ" ---
         shareBudgetIdButton.setOnClickListener {
             val budgetId = budgetIdTextView.text.toString()
             if (budgetId.isNotEmpty()) {
@@ -84,25 +81,32 @@ class BudgetManagementActivity : AppCompatActivity() {
 
     private fun loadBudget() {
         val budgetId = BudgetManager.currentBudgetId ?: return
-        db.collection("budgets").document(budgetId).addSnapshotListener { snapshot, _ ->
+        db.collection("budgets").document(budgetId).addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                // Обработка ошибки загрузки
+                return@addSnapshotListener
+            }
+
             if (snapshot != null && snapshot.exists()) {
-                currentBudget = snapshot.toObject(Budget::class.java)
+                // --- ГЛАВНОЕ ИЗМЕНЕНИЕ ЗДЕСЬ ---
+                // 1. Преобразуем документ в объект Budget
+                // 2. С помощью .copy() сразу же вставляем в него ID самого документа
+                currentBudget = snapshot.toObject(Budget::class.java)?.copy(id = snapshot.id)
                 updateUI()
             }
         }
     }
 
     private fun updateUI() {
-        currentBudget?.let {
-            budgetNameEditText.setText(it.name)
-            // --- Устанавливаем ID бюджета в текстовое поле ---
-            budgetIdTextView.text = it.id
+        currentBudget?.let { budget ->
+            budgetNameEditText.setText(budget.name)
+            // Теперь в поле id гарантированно будет правильный ID
+            budgetIdTextView.text = budget.id
 
-            val membersList = it.members.values.toList()
+            val membersList = budget.members.values.toList()
             membersRecyclerView.adapter = MemberAdapter(membersList)
 
-            val isOwner = auth.currentUser?.uid == it.ownerId
-            // Только владелец может приглашать и делиться
+            val isOwner = auth.currentUser?.uid == budget.ownerId
             inviteButton.isEnabled = isOwner
             shareBudgetIdButton.isEnabled = isOwner
         }

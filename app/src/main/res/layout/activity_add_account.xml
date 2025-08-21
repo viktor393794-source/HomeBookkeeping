@@ -1,111 +1,122 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:fitsSystemWindows="true"
+            tools:context=".AddAccountActivity">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Новый счет"
+                android:textSize="22sp"
+                android:textStyle="bold"/>
+
+            <EditText
+                android:id="@+id/accountNameEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="Название (напр., Карта Сбербанк)"
+                android:inputType="textCapSentences"/>
+
+            <EditText
+                android:id="@+id/initialBalanceEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="Начальный баланс"
+                android:inputType="numberDecimal"/>
+
+            <CheckBox
+                android:id="@+id/includeInTotalCheckBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Учитывать в общем балансе"
+                android:checked="true" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="16dp">
+                <ImageView
+                    android:id="@+id/selectedIconImageView"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_default_wallet"
+                    android:padding="8dp"/>
+                <Button
+                    android:id="@+id/selectIconButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="Выбрать иконку"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp">
+                <View
+                    android:id="@+id/iconColorPreview"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"/>
+                <Button
+                    android:id="@+id/selectIconColorButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="Выбрать цвет иконки"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp">
+                <View
+                    android:id="@+id/backgroundColorPreview"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"/>
+                <Button
+                    android:id="@+id/selectBackgroundColorButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="Выбрать цвет фона"/>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/addAccountButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Добавить счет"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:fitsSystemWindows="true"
-        tools:context=".AddAccountActivity">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Новый счет"
-            android:textSize="22sp"
-            android:textStyle="bold"/>
-
-        <EditText
-            android:id="@+id/accountNameEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="Название (напр., Карта Сбербанк)"
-            android:inputType="textCapSentences"/>
-
-        <EditText
-            android:id="@+id/initialBalanceEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="Начальный баланс"
-            android:inputType="numberDecimal"/>
-
-        <!-- НОВЫЙ CHECKBOX -->
-        <CheckBox
-            android:id="@+id/includeInTotalCheckBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Учитывать в общем балансе"
-            android:checked="true" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="16dp">
-            <ImageView
-                android:id="@+id/selectedIconImageView"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@drawable/ic_default_wallet"
-                android:padding="8dp"/>
-            <Button
-                android:id="@+id/selectIconButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text="Выбрать иконку"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="8dp">
-            <View
-                android:id="@+id/iconColorPreview"
-                android:layout_width="48dp"
-                android:layout_height="48dp"/>
-            <Button
-                android:id="@+id/selectIconColorButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text="Выбрать цвет иконки"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="8dp">
-            <View
-                android:id="@+id/backgroundColorPreview"
-                android:layout_width="48dp"
-                android:layout_height="48dp"/>
-            <Button
-                android:id="@+id/selectBackgroundColorButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:text="Выбрать цвет фона"/>
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/addAccountButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Добавить счет"/>
-
-    </LinearLayout>
-</ScrollView>
+        android:layout_gravity="center"
+        android:visibility="gone"/>
+</FrameLayout>

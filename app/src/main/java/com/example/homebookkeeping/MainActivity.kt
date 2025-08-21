@@ -10,6 +10,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.RadioGroup
 import android.widget.Spinner
 import android.widget.TextView
@@ -41,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var categoryLayout: LinearLayout
     private lateinit var fromAccountLabel: TextView
     private lateinit var totalBalanceTextView: TextView
+    private lateinit var mainProgressBar: ProgressBar
 
     private val accountsList = mutableListOf<Account>()
     private val allCategories = mutableListOf<Category>()
@@ -65,24 +67,14 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // --- ИСПРАВЛЕННАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ ---
-        // 1. Сначала находим все UI элементы
         initializeUI()
-
-        // 2. Теперь безопасно настраиваем Toolbar
         setSupportActionBar(findViewById(R.id.mainToolbar))
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        // 3. Блокируем форму до загрузки данных
         setFormEnabled(false)
 
-        // 4. Настраиваем спиннеры
         setupSpinners()
-
-        // 5. И только теперь, когда все элементы найдены, назначаем им действия
         setupListeners()
-        // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
-
         listenForAccounts()
         listenForCategories()
         updateDateButtonText()
@@ -101,6 +93,7 @@ class MainActivity : AppCompatActivity() {
         categoryLayout = findViewById(R.id.categoryLayout)
         fromAccountLabel = findViewById(R.id.fromAccountLabel)
         totalBalanceTextView = findViewById(R.id.totalBalanceTextView)
+        mainProgressBar = findViewById(R.id.mainProgressBar)
     }
 
     private fun setFormEnabled(isEnabled: Boolean) {
@@ -242,14 +235,36 @@ class MainActivity : AppCompatActivity() {
         val description = descriptionEditText.text.toString()
         val type = if (operationTypeRadioGroup.checkedRadioButtonId == R.id.expenseRadioButton) "EXPENSE" else "INCOME"
 
-        if (amountStr.isBlank() || amountStr.toDoubleOrNull() ?: 0.0 <= 0) { Toast.makeText(this, "Введите корректную сумму", Toast.LENGTH_SHORT).show(); return }
+        if (amountStr.isBlank() || amountStr.toDoubleOrNull() ?: 0.0 <= 0) {
+            Toast.makeText(this, "Введите корректную сумму", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        executeOperationButton.isEnabled = false
+        mainProgressBar.visibility = View.VISIBLE
+
         val amount = amountStr.toDouble()
-        if (fromAccountSpinner.selectedItemPosition < 0) { Toast.makeText(this, "Выберите счет", Toast.LENGTH_SHORT).show(); return }
+        if (fromAccountSpinner.selectedItemPosition < 0) {
+            Toast.makeText(this, "Выберите счет", Toast.LENGTH_SHORT).show()
+            executeOperationButton.isEnabled = true
+            mainProgressBar.visibility = View.GONE
+            return
+        }
         val selectedAccount = fromAccountSpinner.selectedItem as Account
-        if (categorySpinner.selectedItemPosition < 0) { Toast.makeText(this, "Выберите категорию", Toast.LENGTH_SHORT).show(); return }
+        if (categorySpinner.selectedItemPosition < 0) {
+            Toast.makeText(this, "Выберите категорию", Toast.LENGTH_SHORT).show()
+            executeOperationButton.isEnabled = true
+            mainProgressBar.visibility = View.GONE
+            return
+        }
         val selectedCategory = categorySpinner.selectedItem as Category
         val isLeafCategory = allCategories.none { it.parentId == selectedCategory.id }
-        if (!isLeafCategory) { Toast.makeText(this, "Выберите подкатегорию. Нельзя присваивать операции родительским категориям.", Toast.LENGTH_LONG).show(); return }
+        if (!isLeafCategory) {
+            Toast.makeText(this, "Выберите подкатегорию. Нельзя присваивать операции родительским категориям.", Toast.LENGTH_LONG).show()
+            executeOperationButton.isEnabled = true
+            mainProgressBar.visibility = View.GONE
+            return
+        }
 
         db.runTransaction { firestoreTransaction ->
             val accountRef = db.collection("budgets").document(budgetId).collection("accounts").document(selectedAccount.id)
@@ -262,8 +277,16 @@ class MainActivity : AppCompatActivity() {
             val newTransaction = Transaction(amount = amount, description = description, timestamp = selectedDate.time, type = type, accountId = selectedAccount.id, categoryId = selectedCategory.id)
             firestoreTransaction.set(newTransactionRef, newTransaction)
             null
-        }.addOnSuccessListener { Toast.makeText(this, "Операция успешно добавлена!", Toast.LENGTH_SHORT).show(); clearInputFields()
-        }.addOnFailureListener { e -> Log.e("MainActivity", "Ошибка добавления операции: ${e.message}", e); Toast.makeText(this, "Ошибка: ${e.message}", Toast.LENGTH_LONG).show() }
+        }.addOnSuccessListener {
+            Toast.makeText(this, "Операция успешно добавлена!", Toast.LENGTH_SHORT).show()
+            clearInputFields()
+        }.addOnFailureListener { e ->
+            Log.e("MainActivity", "Ошибка добавления операции: ${e.message}", e)
+            Toast.makeText(this, "Ошибка: ${e.message}", Toast.LENGTH_LONG).show()
+        }.addOnCompleteListener {
+            executeOperationButton.isEnabled = true
+            mainProgressBar.visibility = View.GONE
+        }
     }
 
     private fun handleTransfer() {
@@ -271,10 +294,27 @@ class MainActivity : AppCompatActivity() {
         val amountStr = amountEditText.text.toString()
         val description = descriptionEditText.text.toString()
 
-        if (amountStr.isBlank() || amountStr.toDoubleOrNull() ?: 0.0 <= 0) { Toast.makeText(this, "Введите корректную сумму", Toast.LENGTH_SHORT).show(); return }
+        if (amountStr.isBlank() || amountStr.toDoubleOrNull() ?: 0.0 <= 0) {
+            Toast.makeText(this, "Введите корректную сумму", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        executeOperationButton.isEnabled = false
+        mainProgressBar.visibility = View.VISIBLE
+
         val amount = amountStr.toDouble()
-        if (fromAccountSpinner.selectedItemPosition < 0 || toAccountSpinner.selectedItemPosition < 0) { Toast.makeText(this, "Выберите оба счета", Toast.LENGTH_SHORT).show(); return }
-        if (fromAccountSpinner.selectedItemPosition == toAccountSpinner.selectedItemPosition) { Toast.makeText(this, "Счета должны быть разными", Toast.LENGTH_SHORT).show(); return }
+        if (fromAccountSpinner.selectedItemPosition < 0 || toAccountSpinner.selectedItemPosition < 0) {
+            Toast.makeText(this, "Выберите оба счета", Toast.LENGTH_SHORT).show()
+            executeOperationButton.isEnabled = true
+            mainProgressBar.visibility = View.GONE
+            return
+        }
+        if (fromAccountSpinner.selectedItemPosition == toAccountSpinner.selectedItemPosition) {
+            Toast.makeText(this, "Счета должны быть разными", Toast.LENGTH_SHORT).show()
+            executeOperationButton.isEnabled = true
+            mainProgressBar.visibility = View.GONE
+            return
+        }
         val fromAccount = fromAccountSpinner.selectedItem as Account
         val toAccount = toAccountSpinner.selectedItem as Account
 
@@ -291,14 +331,28 @@ class MainActivity : AppCompatActivity() {
             val transferTransaction = Transaction(amount = amount, description = description.ifEmpty { "Перевод" }, timestamp = selectedDate.time, type = "TRANSFER", accountId = fromAccount.id, toAccountId = toAccount.id)
             firestoreTransaction.set(newTransactionRef, transferTransaction)
             null
-        }.addOnSuccessListener { Toast.makeText(this, "Перевод успешно выполнен!", Toast.LENGTH_SHORT).show(); clearInputFields() }
+        }.addOnSuccessListener {
+            Toast.makeText(this, "Перевод успешно выполнен!", Toast.LENGTH_SHORT).show()
+            clearInputFields()
+        }.addOnFailureListener { e ->
+            Log.e("MainActivity", "Ошибка перевода: ${e.message}", e)
+            Toast.makeText(this, "Ошибка: ${e.message}", Toast.LENGTH_LONG).show()
+        }.addOnCompleteListener {
+            executeOperationButton.isEnabled = true
+            mainProgressBar.visibility = View.GONE
+        }
     }
 
-    private fun clearInputFields() { amountEditText.text.clear(); descriptionEditText.text.clear() }
+    private fun clearInputFields() {
+        amountEditText.text.clear()
+        descriptionEditText.text.clear()
+    }
 
     private fun showDatePicker() {
         val dateSetListener = DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
-            selectedDate.set(Calendar.YEAR, year); selectedDate.set(Calendar.MONTH, month); selectedDate.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+            selectedDate.set(Calendar.YEAR, year)
+            selectedDate.set(Calendar.MONTH, month)
+            selectedDate.set(Calendar.DAY_OF_MONTH, dayOfMonth)
             updateDateButtonText()
         }
         DatePickerDialog(this, dateSetListener, selectedDate.get(Calendar.YEAR), selectedDate.get(Calendar.MONTH), selectedDate.get(Calendar.DAY_OF_MONTH)).show()

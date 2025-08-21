@@ -12,6 +12,7 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import com.google.firebase.firestore.ktx.firestore
@@ -27,6 +28,8 @@ class AddAccountActivity : AppCompatActivity() {
     private lateinit var iconColorPreview: View
     private lateinit var backgroundColorPreview: View
     private lateinit var includeInTotalCheckBox: CheckBox
+    private lateinit var addAccountButton: Button
+    private lateinit var progressBar: ProgressBar
 
     private var selectedIconName: String = "ic_default_wallet"
     private var selectedIconColorHex: String = "#FFFFFF"
@@ -73,6 +76,8 @@ class AddAccountActivity : AppCompatActivity() {
         iconColorPreview = findViewById(R.id.iconColorPreview)
         backgroundColorPreview = findViewById(R.id.backgroundColorPreview)
         includeInTotalCheckBox = findViewById(R.id.includeInTotalCheckBox)
+        addAccountButton = findViewById(R.id.addAccountButton)
+        progressBar = findViewById(R.id.progressBar)
 
         iconColorPreview.setBackgroundColor(Color.parseColor(selectedIconColorHex))
         backgroundColorPreview.setBackgroundColor(Color.parseColor(selectedBackgroundColorHex))
@@ -92,7 +97,7 @@ class AddAccountActivity : AppCompatActivity() {
             HapticFeedbackHelper.viberate(this)
             backgroundColorPickerLauncher.launch(Intent(this, ColorPickerActivity::class.java))
         }
-        findViewById<Button>(R.id.addAccountButton).setOnClickListener {
+        addAccountButton.setOnClickListener {
             HapticFeedbackHelper.viberate(this)
             addAccount()
         }
@@ -110,6 +115,9 @@ class AddAccountActivity : AppCompatActivity() {
         val includeInTotal = includeInTotalCheckBox.isChecked
 
         if (name.isNotBlank() && balance != null) {
+            addAccountButton.isEnabled = false
+            progressBar.visibility = View.VISIBLE
+
             val account = Account(
                 name = name,
                 balance = balance,
@@ -125,6 +133,10 @@ class AddAccountActivity : AppCompatActivity() {
                 }
                 .addOnFailureListener { e ->
                     Toast.makeText(this, "Ошибка: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+                .addOnCompleteListener {
+                    addAccountButton.isEnabled = true
+                    progressBar.visibility = View.GONE
                 }
         } else {
             Toast.makeText(this, "Заполните все поля", Toast.LENGTH_SHORT).show()
