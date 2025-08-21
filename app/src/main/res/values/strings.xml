@@ -5,6 +5,5 @@
     <string name="notification_channel_name">Напоминания о бюджете</string>
     <string name="notification_channel_description">Напоминания о необходимости внести транзакции</string>
 
-    <!-- Твой Web Client ID -->
-    <string name="default_web_client_id" translatable="false">454480552791-b7dap9fo3g1k97gh7rc6tl2snd6rlsgr.apps.googleusercontent.com</string>
+
 </resources>
