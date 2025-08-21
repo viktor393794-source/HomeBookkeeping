@@ -26,7 +26,7 @@ class AddAccountActivity : AppCompatActivity() {
     private lateinit var selectedIconImageView: ImageView
     private lateinit var iconColorPreview: View
     private lateinit var backgroundColorPreview: View
-    private lateinit var includeInTotalCheckBox: CheckBox // Объявляем CheckBox
+    private lateinit var includeInTotalCheckBox: CheckBox
 
     private var selectedIconName: String = "ic_default_wallet"
     private var selectedIconColorHex: String = "#FFFFFF"
@@ -72,7 +72,7 @@ class AddAccountActivity : AppCompatActivity() {
         selectedIconImageView = findViewById(R.id.selectedIconImageView)
         iconColorPreview = findViewById(R.id.iconColorPreview)
         backgroundColorPreview = findViewById(R.id.backgroundColorPreview)
-        includeInTotalCheckBox = findViewById(R.id.includeInTotalCheckBox) // Находим CheckBox
+        includeInTotalCheckBox = findViewById(R.id.includeInTotalCheckBox)
 
         iconColorPreview.setBackgroundColor(Color.parseColor(selectedIconColorHex))
         backgroundColorPreview.setBackgroundColor(Color.parseColor(selectedBackgroundColorHex))
@@ -99,9 +99,15 @@ class AddAccountActivity : AppCompatActivity() {
     }
 
     private fun addAccount() {
+        val budgetId = BudgetManager.currentBudgetId
+        if (budgetId == null) {
+            Toast.makeText(this, "Ошибка: бюджет не найден", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val name = accountNameEditText.text.toString()
         val balance = initialBalanceEditText.text.toString().toDoubleOrNull()
-        val includeInTotal = includeInTotalCheckBox.isChecked // Считываем состояние CheckBox
+        val includeInTotal = includeInTotalCheckBox.isChecked
 
         if (name.isNotBlank() && balance != null) {
             val account = Account(
@@ -110,9 +116,9 @@ class AddAccountActivity : AppCompatActivity() {
                 iconName = selectedIconName,
                 iconColor = selectedIconColorHex,
                 backgroundColor = selectedBackgroundColorHex,
-                includeInTotal = includeInTotal // Сохраняем значение
+                includeInTotal = includeInTotal
             )
-            db.collection("accounts").add(account)
+            db.collection("budgets").document(budgetId).collection("accounts").add(account)
                 .addOnSuccessListener {
                     Toast.makeText(this, "Счет успешно добавлен!", Toast.LENGTH_SHORT).show()
                     finish()

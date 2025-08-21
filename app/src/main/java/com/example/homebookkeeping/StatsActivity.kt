@@ -11,6 +11,7 @@ import android.widget.LinearLayout
 import android.widget.NumberPicker
 import android.widget.RadioGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -154,14 +155,20 @@ class StatsActivity : AppCompatActivity() {
     }
 
     private fun loadStatsForPeriod(startDate: Date, endDate: Date) {
-        db.collection("categories")
+        val budgetId = BudgetManager.currentBudgetId
+        if (budgetId == null) {
+            Toast.makeText(this, "Ошибка: бюджет не найден", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        db.collection("budgets").document(budgetId).collection("categories")
             .whereEqualTo("type", currentStatType)
             .get()
             .addOnSuccessListener { categorySnapshot ->
                 allCategories.clear()
                 allCategories.addAll(categorySnapshot.documents.mapNotNull { it.toObject(Category::class.java)?.copy(id = it.id) })
 
-                db.collection("transactions")
+                db.collection("budgets").document(budgetId).collection("transactions")
                     .whereGreaterThanOrEqualTo("timestamp", startDate)
                     .whereLessThanOrEqualTo("timestamp", endDate)
                     .get()
@@ -204,20 +211,16 @@ class StatsActivity : AppCompatActivity() {
         updateCollapsedBar()
     }
 
-    // --- ОКОНЧАТЕЛЬНО ИСПРАВЛЕННАЯ ЛОГИКА ПОСТРОЕНИЯ ДЕРЕВА ---
     private fun buildAndDisplayTree() {
         hierarchicalStatsList.clear()
-        // Группируем все категории, а не статистику
         val categoryMap = allCategories.groupBy { it.parentId }
 
         fun addChildren(parentId: String) {
-            // Ищем дочерние категории и сортируем их по сумме из полной, правильной карты статистики
             val children = categoryMap[parentId]?.sortedByDescending { cat ->
                 fullStatsMap[cat.id]?.totalAmount ?: 0.0
             }
 
             children?.forEach { category ->
-                // Берем статистику из полной карты
                 fullStatsMap[category.id]?.let { stat ->
                     if (stat.totalAmount > 0) {
                         hierarchicalStatsList.add(stat)
@@ -228,7 +231,7 @@ class StatsActivity : AppCompatActivity() {
                 }
             }
         }
-        addChildren("") // Начинаем с верхнего уровня
+        addChildren("")
         statsAdapter.notifyDataSetChanged()
     }
 

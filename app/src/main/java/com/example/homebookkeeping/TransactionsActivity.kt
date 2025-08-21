@@ -13,6 +13,7 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.firestore.ListenerRegistration
@@ -41,7 +42,6 @@ class TransactionsActivity : AppCompatActivity() {
 
     private lateinit var transactionAdapter: TransactionAdapter
     private lateinit var typeSpinnerAdapter: ArrayAdapter<String>
-    // --- ИЗМЕНЕНИЕ: Меняем тип адаптера ---
     private lateinit var accountSpinnerAdapter: AccountSpinnerAdapter
 
     private var transactionListener: ListenerRegistration? = null
@@ -94,8 +94,6 @@ class TransactionsActivity : AppCompatActivity() {
         typeSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         typeFilterSpinner.adapter = typeSpinnerAdapter
 
-        // --- ИЗМЕНЕНИЕ: Инициализируем новый адаптер с пустым списком ---
-        // Мы добавим специальный элемент "Все счета" позже, при загрузке данных
         accountSpinnerAdapter = AccountSpinnerAdapter(this, listOf())
         accountFilterSpinner.adapter = accountSpinnerAdapter
     }
@@ -139,12 +137,11 @@ class TransactionsActivity : AppCompatActivity() {
         accountFilterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 HapticFeedbackHelper.viberate(this@TransactionsActivity)
-                // --- ИЗМЕНЕНИЕ: Получаем объект напрямую из адаптера ---
                 val selectedAccount = parent?.getItemAtPosition(position) as? Account
                 if (selectedAccount != null && selectedAccount.id != "ALL_ACCOUNTS_DUMMY_ID") {
                     currentAccountFilterId = selectedAccount.id
                 } else {
-                    currentAccountFilterId = null // "Все счета" выбрано
+                    currentAccountFilterId = null
                 }
                 applyFilters()
             }
@@ -176,11 +173,12 @@ class TransactionsActivity : AppCompatActivity() {
     }
 
     private fun listenForTransactions() {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         progressBar.visibility = View.VISIBLE
         transactionsRecyclerView.visibility = View.GONE
         transactionListener?.remove()
 
-        var query: Query = db.collection("transactions")
+        var query: Query = db.collection("budgets").document(budgetId).collection("transactions")
         if (currentStartDate != null && currentEndDate != null) {
             query = query.whereGreaterThanOrEqualTo("timestamp", currentStartDate!!)
                 .whereLessThanOrEqualTo("timestamp", currentEndDate!!)
@@ -224,22 +222,19 @@ class TransactionsActivity : AppCompatActivity() {
     }
 
     private fun listenForAccounts() {
-        accountsListener = db.collection("accounts").addSnapshotListener { snapshots, e ->
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        accountsListener = db.collection("budgets").document(budgetId).collection("accounts").addSnapshotListener { snapshots, e ->
             if (e != null) { return@addSnapshotListener }
             accountsList.clear()
-
-            // --- ИЗМЕНЕНИЕ: Создаем временный список для спиннера ---
             val spinnerAccounts = mutableListOf<Account>()
-            // Добавляем фиктивный элемент "Все счета" в начало
             spinnerAccounts.add(Account(id = "ALL_ACCOUNTS_DUMMY_ID", name = "Все счета"))
 
             for (doc in snapshots!!) {
                 val account = doc.toObject(Account::class.java).copy(id = doc.id)
-                accountsList.add(account) // Наполняем основной список
-                spinnerAccounts.add(account) // Наполняем список для спиннера
+                accountsList.add(account)
+                spinnerAccounts.add(account)
             }
 
-            // Обновляем адаптер новым списком
             accountSpinnerAdapter = AccountSpinnerAdapter(this, spinnerAccounts)
             accountFilterSpinner.adapter = accountSpinnerAdapter
 
@@ -248,7 +243,8 @@ class TransactionsActivity : AppCompatActivity() {
     }
 
     private fun listenForCategories() {
-        categoriesListener = db.collection("categories").addSnapshotListener { snapshots, e ->
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        categoriesListener = db.collection("budgets").document(budgetId).collection("categories").addSnapshotListener { snapshots, e ->
             if (e != null) { return@addSnapshotListener }
             categoriesList.clear()
             for (doc in snapshots!!) {

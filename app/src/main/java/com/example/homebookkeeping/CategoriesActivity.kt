@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -65,13 +66,14 @@ class CategoriesActivity : AppCompatActivity(), CategoryClickListener {
     }
 
     private fun listenForTransactionsThisMonth() {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         val calendar = Calendar.getInstance()
         calendar.set(Calendar.DAY_OF_MONTH, 1); calendar.set(Calendar.HOUR_OF_DAY, 0); calendar.set(Calendar.MINUTE, 0); calendar.set(Calendar.SECOND, 0)
         val startDate = calendar.time
         calendar.add(Calendar.MONTH, 1); calendar.add(Calendar.DAY_OF_MONTH, -1); calendar.set(Calendar.HOUR_OF_DAY, 23); calendar.set(Calendar.MINUTE, 59); calendar.set(Calendar.SECOND, 59)
         val endDate = calendar.time
 
-        transactionListener = db.collection("transactions")
+        transactionListener = db.collection("budgets").document(budgetId).collection("transactions")
             .whereEqualTo("type", "EXPENSE")
             .whereGreaterThanOrEqualTo("timestamp", startDate)
             .whereLessThanOrEqualTo("timestamp", endDate)
@@ -86,10 +88,17 @@ class CategoriesActivity : AppCompatActivity(), CategoryClickListener {
     }
 
     private fun listenForCategories() {
+        val budgetId = BudgetManager.currentBudgetId
+        if (budgetId == null) {
+            Toast.makeText(this, "Ошибка: бюджет не найден", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
         progressBar.visibility = View.VISIBLE
         categoriesRecyclerView.visibility = View.GONE
 
-        db.collection("categories").addSnapshotListener { snapshots, e ->
+        db.collection("budgets").document(budgetId).collection("categories").addSnapshotListener { snapshots, e ->
             if (e != null) {
                 progressBar.visibility = View.GONE
                 return@addSnapshotListener
@@ -153,7 +162,6 @@ class CategoriesActivity : AppCompatActivity(), CategoryClickListener {
         intent.putExtra("CATEGORY_TYPE", parentCategory.type)
         intent.putExtra("LEVEL", parentCategory.level + 1)
 
-        // --- НОВОЕ: Находим цвета главного родителя и передаем их ---
         var finalParent = parentCategory
         while (finalParent.level != 0) {
             finalParent = allCategoriesList.find { it.id == finalParent.parentId } ?: break

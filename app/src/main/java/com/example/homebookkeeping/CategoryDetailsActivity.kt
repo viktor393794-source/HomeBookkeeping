@@ -11,7 +11,6 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import java.util.Calendar
-import java.util.Date
 
 class CategoryDetailsActivity : AppCompatActivity() {
 
@@ -66,6 +65,7 @@ class CategoryDetailsActivity : AppCompatActivity() {
     }
 
     private fun loadTransactionsForCategory(categoryId: String, monthMillis: Long, type: String) {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         val calendar = Calendar.getInstance().apply { timeInMillis = monthMillis }
         calendar.set(Calendar.DAY_OF_MONTH, 1)
         calendar.set(Calendar.HOUR_OF_DAY, 0); calendar.set(Calendar.MINUTE, 0); calendar.set(Calendar.SECOND, 0)
@@ -75,7 +75,7 @@ class CategoryDetailsActivity : AppCompatActivity() {
         calendar.set(Calendar.HOUR_OF_DAY, 23); calendar.set(Calendar.MINUTE, 59); calendar.set(Calendar.SECOND, 59)
         val endDate = calendar.time
 
-        transactionListener = db.collection("transactions")
+        transactionListener = db.collection("budgets").document(budgetId).collection("transactions")
             .whereEqualTo("categoryId", categoryId)
             .whereEqualTo("type", type)
             .whereGreaterThanOrEqualTo("timestamp", startDate)
@@ -92,7 +92,8 @@ class CategoryDetailsActivity : AppCompatActivity() {
     }
 
     private fun listenForAccounts() {
-        accountsListener = db.collection("accounts").addSnapshotListener { snapshots, e ->
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        accountsListener = db.collection("budgets").document(budgetId).collection("accounts").addSnapshotListener { snapshots, e ->
             if (e != null) { return@addSnapshotListener }
             accountsList.clear()
             for (doc in snapshots!!) {
@@ -103,7 +104,8 @@ class CategoryDetailsActivity : AppCompatActivity() {
     }
 
     private fun listenForCategories() {
-        categoriesListener = db.collection("categories").addSnapshotListener { snapshots, e ->
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        categoriesListener = db.collection("budgets").document(budgetId).collection("categories").addSnapshotListener { snapshots, e ->
             if (e != null) { return@addSnapshotListener }
             categoriesList.clear()
             for (doc in snapshots!!) {

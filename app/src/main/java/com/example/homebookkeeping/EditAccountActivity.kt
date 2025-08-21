@@ -29,7 +29,7 @@ class EditAccountActivity : AppCompatActivity() {
     private lateinit var selectedIconImageView: ImageView
     private lateinit var iconColorPreview: View
     private lateinit var backgroundColorPreview: View
-    private lateinit var includeInTotalCheckBox: CheckBox // Объявляем CheckBox
+    private lateinit var includeInTotalCheckBox: CheckBox
 
     private var selectedIconName: String? = null
     private var selectedIconColorHex: String? = null
@@ -84,7 +84,7 @@ class EditAccountActivity : AppCompatActivity() {
         selectedIconImageView = findViewById(R.id.selectedIconImageView)
         iconColorPreview = findViewById(R.id.iconColorPreview)
         backgroundColorPreview = findViewById(R.id.backgroundColorPreview)
-        includeInTotalCheckBox = findViewById(R.id.includeInTotalCheckBox) // Находим CheckBox
+        includeInTotalCheckBox = findViewById(R.id.includeInTotalCheckBox)
     }
 
     private fun setupListeners() {
@@ -111,7 +111,8 @@ class EditAccountActivity : AppCompatActivity() {
     }
 
     private fun loadAccountData() {
-        db.collection("accounts").document(accountId!!)
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        db.collection("budgets").document(budgetId).collection("accounts").document(accountId!!)
             .get()
             .addOnSuccessListener { document ->
                 if (document != null && document.exists()) {
@@ -127,7 +128,7 @@ class EditAccountActivity : AppCompatActivity() {
     private fun populateUI(account: Account) {
         accountNameEditText.setText(account.name)
         balanceEditText.setText(account.balance.toString())
-        includeInTotalCheckBox.isChecked = account.includeInTotal // Устанавливаем состояние CheckBox
+        includeInTotalCheckBox.isChecked = account.includeInTotal
 
         selectedIconName = account.iconName
         selectedIconColorHex = account.iconColor
@@ -154,9 +155,10 @@ class EditAccountActivity : AppCompatActivity() {
     }
 
     private fun saveChanges() {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         val name = accountNameEditText.text.toString()
         val balance = balanceEditText.text.toString().toDoubleOrNull()
-        val includeInTotal = includeInTotalCheckBox.isChecked // Считываем состояние
+        val includeInTotal = includeInTotalCheckBox.isChecked
 
         if (name.isBlank() || balance == null || selectedIconName == null) {
             Toast.makeText(this, "Все поля должны быть заполнены", Toast.LENGTH_SHORT).show()
@@ -170,10 +172,10 @@ class EditAccountActivity : AppCompatActivity() {
             iconName = selectedIconName!!,
             iconColor = selectedIconColorHex!!,
             backgroundColor = selectedBackgroundColorHex!!,
-            includeInTotal = includeInTotal // Сохраняем значение
+            includeInTotal = includeInTotal
         )
 
-        db.collection("accounts").document(accountId!!)
+        db.collection("budgets").document(budgetId).collection("accounts").document(accountId!!)
             .set(updatedAccount)
             .addOnSuccessListener {
                 Toast.makeText(this, "Счет обновлен", Toast.LENGTH_SHORT).show()
@@ -191,7 +193,8 @@ class EditAccountActivity : AppCompatActivity() {
     }
 
     private fun deleteAccount() {
-        db.collection("accounts").document(accountId!!)
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        db.collection("budgets").document(budgetId).collection("accounts").document(accountId!!)
             .delete()
             .addOnSuccessListener {
                 Toast.makeText(this, "Счет удален", Toast.LENGTH_SHORT).show()

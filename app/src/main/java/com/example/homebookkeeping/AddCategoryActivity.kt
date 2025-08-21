@@ -30,7 +30,6 @@ class AddCategoryActivity : AppCompatActivity() {
     private lateinit var limitEditText: EditText
     private lateinit var typeRadioGroup: RadioGroup
     private lateinit var parentCategoryInfo: TextView
-    // --- Новое: ссылки на кнопки для блокировки ---
     private lateinit var selectIconColorButton: Button
     private lateinit var selectBackgroundColorButton: Button
 
@@ -77,7 +76,6 @@ class AddCategoryActivity : AppCompatActivity() {
         categoryLevel = intent.getIntExtra("LEVEL", 0)
         val parentName = intent.getStringExtra("PARENT_NAME")
         intent.getStringExtra("CATEGORY_TYPE")?.let { categoryType = it }
-        // --- Новое: Получаем унаследованные цвета ---
         val inheritedIconColor = intent.getStringExtra("ICON_COLOR")
         val inheritedBackgroundColor = intent.getStringExtra("BACKGROUND_COLOR")
 
@@ -90,7 +88,6 @@ class AddCategoryActivity : AppCompatActivity() {
             findViewById<RadioButton>(R.id.expenseRadioButton).isEnabled = false
             findViewById<RadioButton>(R.id.incomeRadioButton).isEnabled = false
 
-            // --- Новое: Блокируем кнопки и применяем цвета ---
             if (inheritedIconColor != null && inheritedBackgroundColor != null) {
                 selectedIconColorHex = inheritedIconColor
                 selectedBackgroundColorHex = inheritedBackgroundColor
@@ -153,13 +150,18 @@ class AddCategoryActivity : AppCompatActivity() {
         }
     }
 
-    // --- Новое: отдельная функция для обновления цветов ---
     private fun updateColorPreviews() {
         iconColorPreview.setBackgroundColor(Color.parseColor(selectedIconColorHex))
         backgroundColorPreview.setBackgroundColor(Color.parseColor(selectedBackgroundColorHex))
     }
 
     private fun saveNewCategory() {
+        val budgetId = BudgetManager.currentBudgetId
+        if (budgetId == null) {
+            Toast.makeText(this, "Ошибка: бюджет не найден", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val name = categoryNameEditText.text.toString()
         val limit = limitEditText.text.toString().toDoubleOrNull() ?: 0.0
 
@@ -172,14 +174,14 @@ class AddCategoryActivity : AppCompatActivity() {
             name = name,
             type = categoryType,
             iconName = selectedIconName!!,
-            iconColor = selectedIconColorHex, // Сохраняем правильный (возможно унаследованный) цвет
-            backgroundColor = selectedBackgroundColorHex, // Сохраняем правильный (возможно унаследованный) цвет
+            iconColor = selectedIconColorHex,
+            backgroundColor = selectedBackgroundColorHex,
             limit = limit,
             parentId = parentId ?: "",
             level = categoryLevel
         )
 
-        db.collection("categories").add(newCategory)
+        db.collection("budgets").document(budgetId).collection("categories").add(newCategory)
             .addOnSuccessListener {
                 Toast.makeText(this, "Категория добавлена", Toast.LENGTH_SHORT).show()
                 finish()

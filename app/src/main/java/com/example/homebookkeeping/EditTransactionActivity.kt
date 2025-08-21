@@ -4,7 +4,6 @@ import android.app.AlertDialog
 import android.app.DatePickerDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.RadioGroup
@@ -34,7 +33,6 @@ class EditTransactionActivity : AppCompatActivity() {
     private val allCategories = mutableListOf<Category>()
     private val hierarchicalCategories = mutableListOf<Category>()
 
-    // --- ИЗМЕНЕНИЕ: Меняем тип адаптеров ---
     private lateinit var accountSpinnerAdapter: AccountSpinnerAdapter
     private lateinit var categorySpinnerAdapter: CategorySpinnerAdapter
 
@@ -66,7 +64,6 @@ class EditTransactionActivity : AppCompatActivity() {
     }
 
     private fun setupSpinners() {
-        // --- ИЗМЕНЕНИЕ: Инициализируем новые адаптеры ---
         accountSpinnerAdapter = AccountSpinnerAdapter(this, accountsList)
         accountSpinner.adapter = accountSpinnerAdapter
 
@@ -95,12 +92,13 @@ class EditTransactionActivity : AppCompatActivity() {
     }
 
     private fun loadInitialData() {
-        db.collection("accounts").get().addOnSuccessListener { accountDocs ->
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        db.collection("budgets").document(budgetId).collection("accounts").get().addOnSuccessListener { accountDocs ->
             accountsList.clear()
             accountsList.addAll(accountDocs.map { it.toObject(Account::class.java).copy(id = it.id) })
-            accountSpinnerAdapter.notifyDataSetChanged() // Обновляем адаптер
+            accountSpinnerAdapter.notifyDataSetChanged()
 
-            db.collection("categories").get().addOnSuccessListener { categoryDocs ->
+            db.collection("budgets").document(budgetId).collection("categories").get().addOnSuccessListener { categoryDocs ->
                 allCategories.clear()
                 allCategories.addAll(categoryDocs.map { it.toObject(Category::class.java).copy(id = it.id) })
                 loadTransaction()
@@ -109,7 +107,8 @@ class EditTransactionActivity : AppCompatActivity() {
     }
 
     private fun loadTransaction() {
-        db.collection("transactions").document(transactionId!!).get().addOnSuccessListener { doc ->
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        db.collection("budgets").document(budgetId).collection("transactions").document(transactionId!!).get().addOnSuccessListener { doc ->
             originalTransaction = doc.toObject(Transaction::class.java)?.copy(id = doc.id)
             originalTransaction?.let { populateUI(it) }
         }
@@ -133,6 +132,7 @@ class EditTransactionActivity : AppCompatActivity() {
     }
 
     private fun saveChanges() {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         val original = originalTransaction ?: return
         val newAmount = amountEditText.text.toString().toDoubleOrNull() ?: 0.0
         val newType = if (operationTypeRadioGroup.checkedRadioButtonId == R.id.expenseRadioButton) "EXPENSE" else "INCOME"
@@ -141,7 +141,6 @@ class EditTransactionActivity : AppCompatActivity() {
             Toast.makeText(this, "Заполните все поля", Toast.LENGTH_SHORT).show()
             return
         }
-        // --- ИЗМЕНЕНИЕ: Получаем объекты напрямую из спиннера ---
         val newAccount = accountSpinner.selectedItem as Account
         val newCategory = categorySpinner.selectedItem as Category
 
@@ -157,9 +156,9 @@ class EditTransactionActivity : AppCompatActivity() {
         )
 
         db.runTransaction { firestoreTransaction ->
-            val transactionRef = db.collection("transactions").document(original.id)
-            val originalAccountRef = db.collection("accounts").document(original.accountId)
-            val newAccountRef = db.collection("accounts").document(newAccount.id)
+            val transactionRef = db.collection("budgets").document(budgetId).collection("transactions").document(original.id)
+            val originalAccountRef = db.collection("budgets").document(budgetId).collection("accounts").document(original.accountId)
+            val newAccountRef = db.collection("budgets").document(budgetId).collection("accounts").document(newAccount.id)
 
             val originalAccountDoc = if (original.accountId.isNotBlank()) firestoreTransaction.get(originalAccountRef) else null
             val newAccountDoc = firestoreTransaction.get(newAccountRef)
@@ -207,11 +206,12 @@ class EditTransactionActivity : AppCompatActivity() {
     }
 
     private fun deleteTransaction() {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         val original = originalTransaction ?: return
 
         db.runTransaction { firestoreTransaction ->
-            val transactionRef = db.collection("transactions").document(original.id)
-            val accountRef = db.collection("accounts").document(original.accountId)
+            val transactionRef = db.collection("budgets").document(budgetId).collection("transactions").document(original.id)
+            val accountRef = db.collection("budgets").document(budgetId).collection("accounts").document(original.accountId)
             val accountDoc = if (original.accountId.isNotBlank()) firestoreTransaction.get(accountRef) else null
 
             if (original.accountId.isNotBlank() && accountDoc != null && accountDoc.exists()) {
@@ -260,8 +260,6 @@ class EditTransactionActivity : AppCompatActivity() {
             }
         }
         addChildren("", 0)
-
-        // --- ИЗМЕНЕНИЕ: Просто обновляем адаптер ---
         categorySpinnerAdapter.notifyDataSetChanged()
     }
 }

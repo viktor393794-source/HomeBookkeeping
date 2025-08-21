@@ -5,7 +5,6 @@ import android.app.DatePickerDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
@@ -29,7 +28,6 @@ class EditTransferActivity : AppCompatActivity() {
     private lateinit var dateButton: Button
 
     private val accountsList = mutableListOf<Account>()
-    // --- ИЗМЕНЕНИЕ: Меняем тип адаптера ---
     private lateinit var accountSpinnerAdapter: AccountSpinnerAdapter
 
     private var selectedDate: Calendar = Calendar.getInstance()
@@ -45,7 +43,7 @@ class EditTransferActivity : AppCompatActivity() {
         }
 
         initializeUI()
-        setupSpinners() // --- ИЗМЕНЕНИЕ: Вызываем новый setupSpinners ---
+        setupSpinners()
         setupListeners()
         loadInitialData()
     }
@@ -58,7 +56,6 @@ class EditTransferActivity : AppCompatActivity() {
         dateButton = findViewById(R.id.dateButton)
     }
 
-    // --- ИЗМЕНЕНИЕ: Новый метод для инициализации адаптера ---
     private fun setupSpinners() {
         accountSpinnerAdapter = AccountSpinnerAdapter(this, accountsList)
         fromAccountSpinner.adapter = accountSpinnerAdapter
@@ -82,13 +79,13 @@ class EditTransferActivity : AppCompatActivity() {
     }
 
     private fun loadInitialData() {
-        db.collection("accounts").get().addOnSuccessListener { accountDocs ->
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        db.collection("budgets").document(budgetId).collection("accounts").get().addOnSuccessListener { accountDocs ->
             accountsList.clear()
             for (doc in accountDocs) {
                 val account = doc.toObject(Account::class.java).copy(id = doc.id)
                 accountsList.add(account)
             }
-            // --- ИЗМЕНЕНИЕ: Просто уведомляем адаптер об изменениях ---
             accountSpinnerAdapter.notifyDataSetChanged()
 
             loadTransaction()
@@ -96,7 +93,8 @@ class EditTransferActivity : AppCompatActivity() {
     }
 
     private fun loadTransaction() {
-        db.collection("transactions").document(transactionId!!).get().addOnSuccessListener { doc ->
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        db.collection("budgets").document(budgetId).collection("transactions").document(transactionId!!).get().addOnSuccessListener { doc ->
             originalTransaction = doc.toObject(Transaction::class.java)?.copy(id = doc.id)
             originalTransaction?.let { populateUI(it) }
         }
@@ -119,6 +117,7 @@ class EditTransferActivity : AppCompatActivity() {
     }
 
     private fun saveChanges() {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         val original = originalTransaction ?: return
 
         val newAmount = amountEditText.text.toString().toDoubleOrNull() ?: 0.0
@@ -127,7 +126,6 @@ class EditTransferActivity : AppCompatActivity() {
             return
         }
 
-        // --- ИЗМЕНЕНИЕ: Получаем объекты напрямую из спиннера ---
         val fromAccount = fromAccountSpinner.selectedItem as Account
         val toAccount = toAccountSpinner.selectedItem as Account
 
@@ -145,10 +143,11 @@ class EditTransferActivity : AppCompatActivity() {
         )
 
         db.runTransaction { firestoreTransaction ->
-            val originalFromRef = db.collection("accounts").document(original.accountId)
-            val originalToRef = db.collection("accounts").document(original.toAccountId)
-            val newFromRef = db.collection("accounts").document(fromAccount.id)
-            val newToRef = db.collection("accounts").document(toAccount.id)
+            val budgetRef = db.collection("budgets").document(budgetId)
+            val originalFromRef = budgetRef.collection("accounts").document(original.accountId)
+            val originalToRef = budgetRef.collection("accounts").document(original.toAccountId)
+            val newFromRef = budgetRef.collection("accounts").document(fromAccount.id)
+            val newToRef = budgetRef.collection("accounts").document(toAccount.id)
 
             val originalFromDoc = firestoreTransaction.get(originalFromRef)
             val originalToDoc = firestoreTransaction.get(originalToRef)
@@ -179,7 +178,7 @@ class EditTransferActivity : AppCompatActivity() {
             }
             firestoreTransaction.update(newToRef, "balance", currentNewToBalance + newAmount)
 
-            firestoreTransaction.set(db.collection("transactions").document(original.id), updatedTransaction)
+            firestoreTransaction.set(budgetRef.collection("transactions").document(original.id), updatedTransaction)
             null
         }.addOnSuccessListener {
             Toast.makeText(this, "Перевод обновлен", Toast.LENGTH_SHORT).show()
@@ -200,11 +199,13 @@ class EditTransferActivity : AppCompatActivity() {
     }
 
     private fun deleteTransaction() {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         val original = originalTransaction ?: return
 
         db.runTransaction { firestoreTransaction ->
-            val fromAccountRef = db.collection("accounts").document(original.accountId)
-            val toAccountRef = db.collection("accounts").document(original.toAccountId)
+            val budgetRef = db.collection("budgets").document(budgetId)
+            val fromAccountRef = budgetRef.collection("accounts").document(original.accountId)
+            val toAccountRef = budgetRef.collection("accounts").document(original.toAccountId)
 
             val fromAccountDoc = firestoreTransaction.get(fromAccountRef)
             val toAccountDoc = firestoreTransaction.get(toAccountRef)
@@ -215,7 +216,7 @@ class EditTransferActivity : AppCompatActivity() {
             val toBalance = toAccountDoc.getDouble("balance") ?: 0.0
             firestoreTransaction.update(toAccountRef, "balance", toBalance - original.amount)
 
-            firestoreTransaction.delete(db.collection("transactions").document(original.id))
+            firestoreTransaction.delete(budgetRef.collection("transactions").document(original.id))
             null
         }.addOnSuccessListener {
             Toast.makeText(this, "Перевод удален", Toast.LENGTH_SHORT).show()

@@ -102,12 +102,13 @@ class AddRecurringTransactionActivity : AppCompatActivity() {
     }
 
     private fun loadInitialData() {
-        db.collection("accounts").get().addOnSuccessListener { accountDocs ->
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        db.collection("budgets").document(budgetId).collection("accounts").get().addOnSuccessListener { accountDocs ->
             accountsList.clear()
             accountsList.addAll(accountDocs.map { it.toObject(Account::class.java).copy(id = it.id) })
             accountSpinnerAdapter.notifyDataSetChanged()
 
-            db.collection("categories").get().addOnSuccessListener { categoryDocs ->
+            db.collection("budgets").document(budgetId).collection("categories").get().addOnSuccessListener { categoryDocs ->
                 allCategories.clear()
                 allCategories.addAll(categoryDocs.map { it.toObject(Category::class.java).copy(id = it.id) })
 
@@ -124,7 +125,8 @@ class AddRecurringTransactionActivity : AppCompatActivity() {
     }
 
     private fun loadTransactionData() {
-        db.collection("recurring_transactions").document(transactionId!!).get().addOnSuccessListener { doc ->
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        db.collection("budgets").document(budgetId).collection("recurring_transactions").document(transactionId!!).get().addOnSuccessListener { doc ->
             currentTransaction = doc.toObject(RecurringTransaction::class.java)
             currentTransaction?.let { populateUI(it) }
         }
@@ -158,6 +160,7 @@ class AddRecurringTransactionActivity : AppCompatActivity() {
     }
 
     private fun saveTransaction() {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         val amount = amountEditText.text.toString().toDoubleOrNull()
         if (amount == null || amount <= 0) {
             Toast.makeText(this, "Введите корректную сумму", Toast.LENGTH_SHORT).show()
@@ -182,7 +185,7 @@ class AddRecurringTransactionActivity : AppCompatActivity() {
             transaction.dayOfWeek = daySpinner.selectedItemPosition + 1
         }
 
-        val collection = db.collection("recurring_transactions")
+        val collection = db.collection("budgets").document(budgetId).collection("recurring_transactions")
         val task = if (transaction.id.isBlank()) collection.add(transaction) else collection.document(transaction.id).set(transaction)
 
         task.addOnSuccessListener {
@@ -194,11 +197,12 @@ class AddRecurringTransactionActivity : AppCompatActivity() {
     }
 
     private fun confirmAndDelete() {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         AlertDialog.Builder(this)
             .setTitle("Удалить шаблон")
             .setMessage("Вы уверены, что хотите удалить этот шаблон регулярной операции?")
             .setPositiveButton("Удалить") { _, _ ->
-                db.collection("recurring_transactions").document(transactionId!!).delete()
+                db.collection("budgets").document(budgetId).collection("recurring_transactions").document(transactionId!!).delete()
                     .addOnSuccessListener {
                         Toast.makeText(this, "Шаблон удален", Toast.LENGTH_SHORT).show()
                         finish()
@@ -209,9 +213,9 @@ class AddRecurringTransactionActivity : AppCompatActivity() {
     }
 
     private fun updateDaySpinner(periodicityPosition: Int) {
-        val daysAdapter = if (periodicityPosition == 0) { // Ежемесячно
+        val daysAdapter = if (periodicityPosition == 0) {
             ArrayAdapter(this, android.R.layout.simple_spinner_item, (1..31).map { "$it числа" })
-        } else { // Еженедельно
+        } else {
             ArrayAdapter(this, android.R.layout.simple_spinner_item, listOf("по Воскресеньям", "по Понедельникам", "по Вторникам", "по Средам", "по Четвергам", "по Пятницам", "по Субботам"))
         }
         daysAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)

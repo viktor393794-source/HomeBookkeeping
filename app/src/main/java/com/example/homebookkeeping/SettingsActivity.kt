@@ -28,8 +28,12 @@ import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.switchmaterial.SwitchMaterial
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.File
@@ -48,9 +52,10 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var changePinButton: TextView
     private lateinit var checkUpdateButton: TextView
     private lateinit var versionTextView: TextView
-    // --- ИСПРАВЛЕНИЕ: Добавлены недостающие объявления ---
     private lateinit var remindersSwitch: SwitchMaterial
     private lateinit var reminderTimeButton: TextView
+    private lateinit var logoutButton: TextView
+    private lateinit var manageBudgetButton: TextView
 
     companion object {
         const val PREFS_NAME = "app_settings"
@@ -98,9 +103,10 @@ class SettingsActivity : AppCompatActivity() {
         changePinButton = findViewById(R.id.changePinButton)
         checkUpdateButton = findViewById(R.id.checkUpdateButton)
         versionTextView = findViewById(R.id.versionTextView)
-        // --- ИСПРАВЛЕНИЕ: Добавлены недостающие findViewById ---
         remindersSwitch = findViewById(R.id.remindersSwitch)
         reminderTimeButton = findViewById(R.id.reminderTimeButton)
+        logoutButton = findViewById(R.id.logoutButton)
+        manageBudgetButton = findViewById(R.id.manageBudgetButton)
 
         toolbar.setNavigationOnClickListener { finish() }
 
@@ -133,7 +139,6 @@ class SettingsActivity : AppCompatActivity() {
         biometricsSwitch.setOnCheckedChangeListener { _, isChecked -> saveBiometricsSetting(isChecked) }
         changePinButton.setOnClickListener { createPasscodeLauncher.launch(Intent(this, CreatePasscodeActivity::class.java)) }
         checkUpdateButton.setOnClickListener { checkForUpdates() }
-
         remindersSwitch.setOnCheckedChangeListener { _, isChecked ->
             sharedPreferences.edit().putBoolean(KEY_REMINDERS_ENABLED, isChecked).apply()
             if (isChecked) {
@@ -145,6 +150,25 @@ class SettingsActivity : AppCompatActivity() {
             updateUiState()
         }
         reminderTimeButton.setOnClickListener { showTimePicker() }
+        logoutButton.setOnClickListener { signOut() }
+        manageBudgetButton.setOnClickListener {
+            startActivity(Intent(this, BudgetManagementActivity::class.java))
+        }
+    }
+
+    private fun signOut() {
+        Firebase.auth.signOut()
+        BudgetManager.clearCurrentBudget(this)
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        GoogleSignIn.getClient(this, gso).signOut().addOnCompleteListener {
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+            finish()
+        }
     }
 
     private fun updateUiState() {
@@ -233,7 +257,8 @@ class SettingsActivity : AppCompatActivity() {
 
         thread {
             try {
-                val url = URL("https://api.github.com/repos/YOUR_USERNAME/YOUR_REPOSITORY/releases/latest")
+                // !!! ВАЖНО: Замените "YOUR_USERNAME" и "YOUR_REPOSITORY" на ваши данные
+                val url = URL("https://api.github.com/repos/viktor393794-source/HomeBookkeeping/releases/latest")
                 val connection = url.openConnection() as HttpsURLConnection
                 connection.requestMethod = "GET"
                 connection.setRequestProperty("Accept", "application/vnd.github.v3+json")

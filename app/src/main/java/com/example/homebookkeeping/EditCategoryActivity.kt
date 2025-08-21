@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -40,7 +39,6 @@ class EditCategoryActivity : AppCompatActivity() {
 
     private val allCategories = mutableListOf<Category>()
     private val possibleParents = mutableListOf<Category>()
-    // --- ИЗМЕНЕНИЕ: Меняем тип адаптера ---
     private lateinit var parentSpinnerAdapter: CategorySpinnerAdapter
 
     private var selectedIconName: String? = null
@@ -121,7 +119,8 @@ class EditCategoryActivity : AppCompatActivity() {
     }
 
     private fun loadAllCategoriesAndCurrent() {
-        db.collection("categories").get().addOnSuccessListener { snapshot ->
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        db.collection("budgets").document(budgetId).collection("categories").get().addOnSuccessListener { snapshot ->
             allCategories.clear()
             allCategories.addAll(snapshot.map { it.toObject(Category::class.java).copy(id = it.id) })
 
@@ -150,7 +149,6 @@ class EditCategoryActivity : AppCompatActivity() {
         val sortedHierarchicalList = buildHierarchicalList(filteredList)
         possibleParents.addAll(sortedHierarchicalList)
 
-        // --- ИЗМЕНЕНИЕ: Используем новый CategorySpinnerAdapter ---
         parentSpinnerAdapter = CategorySpinnerAdapter(this, possibleParents)
         parentCategorySpinner.adapter = parentSpinnerAdapter
 
@@ -186,11 +184,11 @@ class EditCategoryActivity : AppCompatActivity() {
     }
 
     private fun saveChanges() {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         val initialCategory = currentCategory ?: return
         val name = categoryNameEditText.text.toString()
         val type = if (typeRadioGroup.checkedRadioButtonId == R.id.expenseRadioButton) "EXPENSE" else "INCOME"
 
-        // --- ИЗМЕНЕНИЕ: Получаем объект напрямую из спиннера ---
         val selectedParent = parentCategorySpinner.selectedItem as Category
         val newParentId = selectedParent.id
         val newLevel = if (newParentId.isBlank()) 0 else (allCategories.find { it.id == newParentId }?.level ?: 0) + 1
@@ -211,7 +209,7 @@ class EditCategoryActivity : AppCompatActivity() {
         if (isTopLevel && colorsHaveChanged) {
             updateDescendantColors(updatedCategory)
         } else {
-            db.collection("categories").document(updatedCategory.id).set(updatedCategory)
+            db.collection("budgets").document(budgetId).collection("categories").document(updatedCategory.id).set(updatedCategory)
                 .addOnSuccessListener {
                     Toast.makeText(this, "Категория обновлена", Toast.LENGTH_SHORT).show()
                     finish()
@@ -220,15 +218,16 @@ class EditCategoryActivity : AppCompatActivity() {
     }
 
     private fun updateDescendantColors(parentCategory: Category) {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         val batch = db.batch()
-        batch.set(db.collection("categories").document(parentCategory.id), parentCategory)
+        batch.set(db.collection("budgets").document(budgetId).collection("categories").document(parentCategory.id), parentCategory)
 
         val descendants = mutableSetOf<String>()
         findDescendants(parentCategory.id, allCategories, descendants)
 
         if (descendants.isNotEmpty()) {
             descendants.forEach { descendantId ->
-                val docRef = db.collection("categories").document(descendantId)
+                val docRef = db.collection("budgets").document(budgetId).collection("categories").document(descendantId)
                 batch.update(docRef, mapOf(
                     "iconColor" to parentCategory.iconColor,
                     "backgroundColor" to parentCategory.backgroundColor
@@ -288,11 +287,12 @@ class EditCategoryActivity : AppCompatActivity() {
             .setNegativeButton("Отмена", null).show()
     }
     private fun deleteCategoryAndChildren() {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         val descendants = mutableSetOf<String>()
         findDescendants(categoryId!!, allCategories, descendants)
         descendants.add(categoryId!!)
         val batch = db.batch()
-        descendants.forEach { idToDelete -> batch.delete(db.collection("categories").document(idToDelete)) }
+        descendants.forEach { idToDelete -> batch.delete(db.collection("budgets").document(budgetId).collection("categories").document(idToDelete)) }
         batch.commit()
             .addOnSuccessListener { finish(); Toast.makeText(this, "Категория и все подкатегории удалены", Toast.LENGTH_SHORT).show() }
     }

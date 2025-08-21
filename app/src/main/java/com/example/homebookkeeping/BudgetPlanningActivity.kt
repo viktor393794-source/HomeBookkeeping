@@ -6,6 +6,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.NumberPicker
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -55,7 +56,13 @@ class BudgetPlanningActivity : AppCompatActivity() {
     }
 
     private fun loadCategories() {
-        db.collection("categories").addSnapshotListener { snapshots, e ->
+        val budgetId = BudgetManager.currentBudgetId
+        if (budgetId == null) {
+            Toast.makeText(this, "Ошибка: бюджет не найден", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+        db.collection("budgets").document(budgetId).collection("categories").addSnapshotListener { snapshots, e ->
             if (e != null) { return@addSnapshotListener }
             allCategories.clear()
             snapshots?.forEach { doc ->
@@ -123,7 +130,6 @@ class BudgetPlanningActivity : AppCompatActivity() {
                 selectedMonth.set(Calendar.MONTH, monthPicker.value)
                 selectedMonth.set(Calendar.YEAR, yearPicker.value)
                 updateMonthButtonText()
-                // Здесь может быть логика загрузки планов на конкретный месяц в будущем
             }
             .setNegativeButton("Отмена", null)
             .show()

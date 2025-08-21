@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -56,10 +57,17 @@ class AccountsActivity : AppCompatActivity() {
     }
 
     private fun listenForAccounts() {
+        val budgetId = BudgetManager.currentBudgetId
+        if (budgetId == null) {
+            Toast.makeText(this, "Ошибка: бюджет не найден", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
         progressBar.visibility = View.VISIBLE
         accountsRecyclerView.visibility = View.GONE
 
-        db.collection("accounts")
+        db.collection("budgets").document(budgetId).collection("accounts")
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
                     Log.w("Firestore", "Ошибка прослушивания счетов.", e)

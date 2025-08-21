@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -40,13 +41,20 @@ class RecurringTransactionsActivity : AppCompatActivity() {
     }
 
     private fun loadData() {
-        db.collection("categories").get().addOnSuccessListener { categorySnapshot ->
+        val budgetId = BudgetManager.currentBudgetId
+        if (budgetId == null) {
+            Toast.makeText(this, "Ошибка: бюджет не найден", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
+        db.collection("budgets").document(budgetId).collection("categories").get().addOnSuccessListener { categorySnapshot ->
             categories.clear()
             categorySnapshot.documents.forEach { doc ->
                 categories.add(doc.toObject(Category::class.java)!!.copy(id = doc.id))
             }
 
-            db.collection("recurring_transactions")
+            db.collection("budgets").document(budgetId).collection("recurring_transactions")
                 .orderBy("nextExecutionDate")
                 .addSnapshotListener { snapshot, _ ->
                     recurringTransactions.clear()

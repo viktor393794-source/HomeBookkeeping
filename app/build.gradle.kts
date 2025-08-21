@@ -5,15 +5,20 @@ plugins {
 }
 
 android {
-    namespace = "com.example.homebookkeeping" // !!! ЭТО ДОЛЖНО СОВПАДАТЬ С package В MainActivity.kt !!!
-    compileSdk = 34 // Или твоя текущая версия SDK
+    // highlight-start
+    // ВАЖНО: Это ваше правильное имя. Теперь нужно изменить все .kt файлы, чтобы они ему соответствовали.
+    namespace = "com.example.homebookkeeping"
+    compileSdk = 34
+    // highlight-end
 
     defaultConfig {
-        applicationId = "com.example.homebookkeeping" // !!! И ЭТОТ ТОЖЕ ДОЛЖЕН СОВПАДАТЬ !!!
+        // highlight-start
+        applicationId = "com.example.homebookkeeping"
         minSdk = 24
+        // highlight-end
         targetSdk = 34
         versionCode = 1
-        versionName = "0.6.0"
+        versionName = "0.7.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -31,14 +36,19 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    // highlight-start
+    // ДОБАВЛЕНО: Эта строчка все еще нужна, чтобы исправить ошибки "Unresolved reference"
+    buildFeatures {
+        dataBinding = true
+    }
+    // highlight-end
 }
 
 dependencies {
     // Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     implementation("com.google.firebase:firebase-firestore-ktx")
-
-    // Kotlin Coroutines
 
     // AndroidX
     implementation("androidx.core:core-ktx:1.12.0")
@@ -49,6 +59,10 @@ dependencies {
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.security:security-crypto:1.0.0")
     implementation("androidx.biometric:biometric:1.1.0")
+
+    // Auth
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     // Тесты
     testImplementation("junit:junit:4.13.2")

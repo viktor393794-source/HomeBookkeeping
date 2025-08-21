@@ -12,7 +12,20 @@
           "package_name": "com.example.homebookkeeping"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "454480552791-b7dap9fo3g1k97gh7rc6tl2snd6rlsgr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.homebookkeeping",
+            "certificate_hash": "20246bb2c3db2adfb5256a1998a176bebb708a3b"
+          }
+        },
+        {
+          "client_id": "454480552791-qs6iaortkqfp0al54q9rothgt00hi880.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD-I4MbbfHuTkcn8FSgc-lA9aObr6AhRPg"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "454480552791-qs6iaortkqfp0al54q9rothgt00hi880.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

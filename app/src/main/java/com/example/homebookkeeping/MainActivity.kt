@@ -17,6 +17,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import java.text.SimpleDateFormat
@@ -26,6 +27,7 @@ import java.util.Locale
 class MainActivity : AppCompatActivity() {
 
     private val db = Firebase.firestore
+    private val auth = Firebase.auth
 
     private lateinit var amountEditText: EditText
     private lateinit var descriptionEditText: EditText
@@ -53,6 +55,15 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // --- НОВАЯ ЛОГИКА: Загружаем активный бюджет ---
+        BudgetManager.loadCurrentBudget(this)
+        if (BudgetManager.currentBudgetId == null || auth.currentUser == null) {
+            // Если бюджета нет или пользователь не вошел, возвращаемся на экран входа
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
 
         val toolbar: MaterialToolbar = findViewById(R.id.mainToolbar)
         setSupportActionBar(toolbar)
@@ -135,7 +146,6 @@ class MainActivity : AppCompatActivity() {
             HapticFeedbackHelper.viberate(this)
             startActivity(Intent(this, BudgetPlanningActivity::class.java))
         }
-        // --- ДОБАВЛЯЕМ СЛУШАТЕЛЬ ДЛЯ НОВОЙ КНОПКИ ---
         findViewById<Button>(R.id.recurringButton).setOnClickListener {
             HapticFeedbackHelper.viberate(this)
             startActivity(Intent(this, RecurringTransactionsActivity::class.java))
@@ -167,6 +177,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleIncomeExpense() {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         val amountStr = amountEditText.text.toString()
         val description = descriptionEditText.text.toString()
         val type = if (operationTypeRadioGroup.checkedRadioButtonId == R.id.expenseRadioButton) "EXPENSE" else "INCOME"
@@ -191,13 +202,13 @@ class MainActivity : AppCompatActivity() {
             return
         }
         db.runTransaction { firestoreTransaction ->
-            val accountRef = db.collection("accounts").document(selectedAccount.id)
+            val accountRef = db.collection("budgets").document(budgetId).collection("accounts").document(selectedAccount.id)
             val accountDoc = firestoreTransaction.get(accountRef)
             val currentBalance = accountDoc.getDouble("balance") ?: 0.0
             val newBalance = if (type == "EXPENSE") currentBalance - amount else currentBalance + amount
             firestoreTransaction.update(accountRef, "balance", newBalance)
 
-            val newTransactionRef = db.collection("transactions").document()
+            val newTransactionRef = db.collection("budgets").document(budgetId).collection("transactions").document()
             val newTransaction = Transaction(
                 amount = amount, description = description, timestamp = selectedDate.time,
                 type = type, accountId = selectedAccount.id, categoryId = selectedCategory.id
@@ -214,6 +225,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleTransfer() {
+        val budgetId = BudgetManager.currentBudgetId ?: return
         val amountStr = amountEditText.text.toString()
         val description = descriptionEditText.text.toString()
         if (amountStr.isBlank() || amountStr.toDoubleOrNull() ?: 0.0 <= 0) {
@@ -236,11 +248,11 @@ class MainActivity : AppCompatActivity() {
             return
         }
         db.runTransaction { firestoreTransaction ->
-            val fromAccountRef = db.collection("accounts").document(fromAccount.id)
-            val toAccountRef = db.collection("accounts").document(toAccount.id)
+            val fromAccountRef = db.collection("budgets").document(budgetId).collection("accounts").document(fromAccount.id)
+            val toAccountRef = db.collection("budgets").document(budgetId).collection("accounts").document(toAccount.id)
             firestoreTransaction.update(fromAccountRef, "balance", fromAccount.balance - amount)
             firestoreTransaction.update(toAccountRef, "balance", toAccount.balance + amount)
-            val newTransactionRef = db.collection("transactions").document()
+            val newTransactionRef = db.collection("budgets").document(budgetId).collection("transactions").document()
             val transferTransaction = Transaction(
                 amount = amount,
                 description = description.ifEmpty { "Перевод" },
@@ -282,7 +294,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun listenForAccounts() {
-        db.collection("accounts").addSnapshotListener { snapshots, e ->
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        db.collection("budgets").document(budgetId).collection("accounts").addSnapshotListener { snapshots, e ->
             if (e != null) {
                 Log.w("Firestore", "Ошибка прослушивания счетов.", e)
                 return@addSnapshotListener
@@ -307,7 +320,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun listenForCategories() {
-        db.collection("categories").addSnapshotListener { snapshots, e ->
+        val budgetId = BudgetManager.currentBudgetId ?: return
+        db.collection("budgets").document(budgetId).collection("categories").addSnapshotListener { snapshots, e ->
             if (e != null) { return@addSnapshotListener }
             allCategories.clear()
             snapshots?.forEach { doc ->

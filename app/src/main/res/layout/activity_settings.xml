@@ -133,6 +133,27 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
+                android:text="УПРАВЛЕНИЕ БЮДЖЕТОМ"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorPrimary"/>
+
+            <TextView
+                android:id="@+id/manageBudgetButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Участники и приглашения"
+                android:textSize="18sp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
                 android:text="ОБНОВЛЕНИЕ"
                 android:textSize="14sp"
                 android:textStyle="bold"
@@ -158,6 +179,27 @@
                 android:layout_marginTop="8dp"
                 android:textColor="?android:attr/textColorSecondary"
                 tools:text="Версия 1.0"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="АККАУНТ"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorPrimary"/>
+
+            <TextView
+                android:id="@+id/logoutButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Выйти из аккаунта"
+                android:textSize="18sp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"/>
 
         </LinearLayout>
     </ScrollView>
